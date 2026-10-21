@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>交易会 新商品チェッカー</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#5b3fa0">
+<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="新商品チェッカー">
+<style>
+:root{--bg:#f5f6f8;--panel:#fff;--fg:#1c2230;--muted:#5d6678;--line:#dde1e8;--go:#1f7a45;--mid:#b26a00;--no:#c0392b;--acc:#5b3fa0;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#121318;--panel:#1b1d25;--fg:#e8eaf0;--muted:#9aa1b2;--line:#2c2f3a;--go:#4cc27e;--mid:#f0a640;--no:#ff7a6b;--acc:#a98bf0;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+.wrap{max-width:980px;margin:0 auto;display:grid;gap:12px}
+h1{font-size:22px;margin:0}.take{color:var(--muted);margin:2px 0 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+h2{font-size:16px;margin:0 0 6px}h3{font-size:14px;margin:12px 0 6px}
+.note{color:var(--muted);font-size:12px;margin:0 0 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:8px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+label{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+select,input,textarea{font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);width:100%;min-width:0}
+.g3 input{padding:10px 8px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr));gap:8px;margin-top:10px}
+.out div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg)}
+.out span{display:block;font-size:12px;color:var(--muted)}
+.out b{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.v{font-size:24px!important;font-weight:700!important}
+.v-go{color:var(--go)}.v-mid{color:var(--mid)}.v-no{color:var(--no)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.btn{font:inherit;font-size:14px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.btn.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.chips button{font:inherit;font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.chips button[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.memo{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg);display:grid;gap:6px}
+.memo-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.memo-head b{font-size:15px}
+.pill{font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;color:#fff;white-space:nowrap}
+.p-go{background:var(--go)}.p-mid{background:var(--mid)}.p-no{background:var(--no)}.p-na{background:var(--muted)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:4px 12px;font-size:13px}.kv span{color:var(--muted)}
+.memos{display:grid;gap:10px}.acts{display:flex;gap:8px}
+.photos{display:flex;gap:6px;flex-wrap:wrap}.photos img{width:80px;height:80px;object-fit:cover;border-radius:8px}
+</style></head><body>
+<div class="wrap">
+<header><h1>交易会 新商品チェッカー</h1><p class="note" id="pwa-st" style="margin:2px 0 0"></p><p class="take">事前リストにない商品を見つけたとき用。商品・売価・梱包・見積を入れると、その場で即決／交渉／見送りが出ます。ネット不要。</p></header>
+
+<section class="card" id="calc">
+<h2>見つけた商品</h2>
+<div class="grid">
+<label for="n-name">商品名（自分が分かる名前でOK）<input id="n-name" type="text" placeholder="例 伸縮テレビ台 ウォルナット"></label>
+<label for="n-cat">ジャンル<input id="n-cat" type="text" list="cats" placeholder="選ぶか入力"></label>
+<datalist id="cats"><option value="セラミック天板ダイニング"><option value="木製ダイニングテーブル"><option value="スチール脚×メラミン デスク・テーブル"><option value="スチール収納・ラック"><option value="木製収納・箱物"><option value="チェア・ソファ（張り物）"><option value="照明・小物"><option value="フライパン・鍋"><option value="ステンレス 保存容器・ボウル・タンブラー"><option value="ガラス製品"><option value="スチール キッチン収納"><option value="珪藻土・セラミック雑貨"><option value="ダイニングチェア（スチール脚・メッキ）"><option value="ステンレス家具・小物"><option value="その他"></datalist>
+<label for="n-price">想定売価（税込）<input id="n-price" type="number" inputmode="numeric" min="0" step="100" placeholder="空欄なら売価の目安を出します"></label>
+<label for="n-ref">楽天などの相場メモ<input id="n-ref" type="text" placeholder="例 楽天売れ筋 12,980円"></label>
+</div>
+<h3>梱包（工場に聞いたサイズ）</h3>
+<div class="grid">
+<label>箱1（幅・奥行・高さ cm）<span class="g3"><input id="b1w" type="number" inputmode="decimal" aria-label="箱1 幅"><input id="b1d" type="number" inputmode="decimal" aria-label="箱1 奥行"><input id="b1h" type="number" inputmode="decimal" aria-label="箱1 高さ"></span></label>
+<label>箱2（あれば）<span class="g3"><input id="b2w" type="number" inputmode="decimal" aria-label="箱2 幅"><input id="b2d" type="number" inputmode="decimal" aria-label="箱2 奥行"><input id="b2h" type="number" inputmode="decimal" aria-label="箱2 高さ"></span></label>
+<label for="pcs">1カートンの入数（まとめ箱なら）<input id="pcs" type="number" inputmode="numeric" min="1" step="1" placeholder="1"></label>
+<label for="shipov">送料を直接入力（円・空欄なら自動）<input id="shipov" type="number" inputmode="numeric" min="0" step="10"></label>
+</div>
+<h3>見積</h3>
+<div class="grid">
+<label for="usd">工場の見積 FOB（$）<input id="usd" type="number" inputmode="decimal" min="0" step="0.1" placeholder="例 45"></label>
+</div>
+<div class="out" aria-live="polite">
+<div><span>判定</span><b class="v" id="verdict">—</b></div>
+<div><span>粗利率</span><b id="gm">—</b></div>
+<div><span>予想利益／個（ロイヤリティ8%後）</span><b id="pf">—</b></div>
+<div><span>即決 $ ／ 上限 $</span><b id="line">—</b></div>
+<div><span>この見積なら売価の目安（粗利35%／25%）</span><b id="need">—</b></div>
+</div>
+<p class="note" id="detail" style="margin-top:8px"></p>
+
+<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+<h3 style="margin-top:0">この見積をメモに残す</h3>
+<div class="grid">
+<label for="m-fac">工場名<input id="m-fac" type="text" placeholder="例 Foshan ○○ Furniture"></label>
+<label for="m-booth">ブース番号<input id="m-booth" type="text" placeholder="例 2期 12.1 F23"></label>
+<label for="m-moq">MOQ<input id="m-moq" type="text" placeholder="例 1コンテナ / 50台"></label>
+<label for="m-port">FOB港<input id="m-port" type="text" placeholder="例 深圳 / 寧波 / ホーチミン"></label>
+<label for="m-country">生産国・工場の場所<input id="m-country" type="text" placeholder="例 ベトナム工場あり"></label>
+<label for="m-size">商品サイズ・材質<input id="m-size" type="text" placeholder="例 W120×D40×H45 / MDF＋スチール"></label>
+</div>
+<label for="m-note" style="margin-top:8px">メモ（なぜ良いか・仕様・カラー・サンプルなど）<textarea id="m-note" rows="3"></textarea></label>
+<label for="m-fphoto" style="margin-top:8px">工場名の写真（看板・名刺など）<input id="m-fphoto" type="file" accept="image/*"></label>
+<div class="photos" id="m-fprev"></div>
+<label for="m-photo" style="margin-top:8px">商品の写真（3枚まで）<input id="m-photo" type="file" accept="image/*" multiple></label>
+<div class="photos" id="m-prev"></div>
+<div class="btns"><button class="btn pri" id="m-add" type="button">メモに追加</button><button class="btn" id="n-clear" type="button">入力をクリア</button><span class="note" id="m-msg" style="align-self:center;margin:0"></span></div>
+</div>
+</section>
+
+<section class="card" id="memos-card">
+<h2>新商品メモ帳</h2>
+<p class="note" id="m-cap" style="margin:0 0 4px"></p>
+<p class="note" id="m-sum">まだメモはありません。</p>
+<div class="chips" id="m-filter"></div>
+<div class="memos" id="memos"></div>
+<div class="btns"><button class="btn pri" id="m-rep" type="button">写真つきレポートで保存</button><button class="btn" id="m-csv" type="button">CSVで保存（文字のみ）</button><button class="btn" id="m-copy" type="button">全部テキストでコピー</button><span class="note" id="m-out" style="align-self:center;margin:0"></span></div>
+<textarea id="m-text" rows="4" readonly style="margin-top:8px" hidden></textarea>
+<h3>バックアップ（スマホの外に置く）</h3>
+<p class="note">メモと写真をまとめて1つのファイルに保存します。WeChatの「文件传输助手」で自分に送るか、iCloud Driveに入れておくと安心です。</p>
+<div class="btns"><button class="btn pri" id="bk-save" type="button">バックアップを保存</button><label class="btn" for="bk-load" style="display:inline-flex;align-items:center;cursor:pointer">バックアップを読み込む<input id="bk-load" type="file" hidden></label><span class="note" id="bk-msg" style="align-self:center;margin:0"></span></div>
+<p class="note" id="bk-last" style="margin-top:6px"></p>
+</section>
+<p class="note">計算は直貿商品データと同じ：下代＝$×170＋輸入諸掛（40万円×CBM÷68）、送料は高木製綿の料金表（3辺合計、260サイズ超は推定）、粗利率＝1−(送料＋下代)×1.1÷売価、ロイヤリティ8%。即決＝粗利35%、上限＝粗利25%。</p>
+</div>
+<script>
+const FEE=[[0, 624], [60.01, 699], [80.01, 794], [100.01, 863], [140.01, 1189], [160.01, 1852], [170.01, 1854], [180.01, 2423], [200.01, 3142], [220.01, 4002], [240.01, 5163], [260.01, 6500], [280.01, 8000], [300.01, 10000]];
+const RATE=170,DUTY=400000,HQ=68,GO=0.35,MAXQ=0.25,ROY=0.08;
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+const usdf=n=>'$'+n.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
+const fee=s=>{let f=0;for(const [lo,v] of FEE){if(s>=lo)f=v}return f};
+const num=id=>{const v=parseFloat($(id).value);return v>0?v:null};
+const lineAt=(price,ship,cbm,q)=>Math.floor((((1-q)*price/1.1-ship-DUTY*cbm/HQ)/RATE)*10)/10;
+function spec(){
+ const b1=[num('b1w'),num('b1d'),num('b1h')],b2=[num('b2w'),num('b2d'),num('b2h')];
+ const ok1=b1.every(Boolean),ok2=b2.every(Boolean),pcs=num('pcs')||1;
+ const vol=b=>b[0]*b[1]*b[2]/1e6,sum=b=>b[0]+b[1]+b[2];
+ const shipOv=$('shipov').value!==''&&parseFloat($('shipov').value)>=0?parseFloat($('shipov').value):null;
+ const autoShip=(ok1?fee(sum(b1)):0)+(ok2?fee(sum(b2)):0);
+ return {b1:ok1?b1:null,b2:ok2?b2:null,pcs,ship:shipOv!=null?shipOv:autoShip,shipOv,cbm:((ok1?vol(b1):0)+(ok2?vol(b2):0))/pcs,price:num('n-price')};
+}
+function calc(){
+ const s=spec(),v=parseFloat($('usd').value),has=$('usd').value!==''&&v>=0;
+ const duty=DUTY*s.cbm/HQ;
+ return Object.assign(s,{usd:has?v:null,duty,cost:has?v*RATE+duty:null});
+}
+function update(){
+ const c=calc(),vd=$('verdict');
+ const box=c.b1?c.b1.join('×')+(c.b2?' ＋ '+c.b2.join('×'):'')+(c.pcs>1?'（'+c.pcs+'個入）':''):'未入力';
+ $('detail').textContent='送料 '+yen(c.ship)+(c.shipOv!=null?'（直接入力）':c.b1?'（'+(c.b1[0]+c.b1[1]+c.b1[2])+(c.b2?'/'+(c.b2[0]+c.b2[1]+c.b2[2]):'')+'サイズ）':'')+'・梱包 '+box+'・CBM '+c.cbm.toFixed(3)+'・諸掛 '+yen(c.duty)+'/個'+(c.cbm>0?'・40HQ 約'+Math.floor(HQ/c.cbm).toLocaleString()+'個':'')+(!c.b1&&c.shipOv==null?'｜梱包サイズを入れると送料と諸掛が入ります':'');
+ $('line').textContent=c.price?usdf(lineAt(c.price,c.ship,c.cbm,GO))+' ／ '+usdf(lineAt(c.price,c.ship,c.cbm,MAXQ)):'売価を入力';
+ $('need').textContent=c.cost!=null?yen(Math.ceil(1.1*(c.ship+c.cost)/(1-GO)/10)*10)+' ／ '+yen(Math.ceil(1.1*(c.ship+c.cost)/(1-MAXQ)/10)*10):'見積を入力';
+ if(c.cost==null||!c.price){vd.textContent=c.cost==null?'見積を入力':'売価を入力';vd.className='v';$('gm').textContent='—';$('pf').textContent='—';return}
+ const gm=1-((c.ship+c.cost)*1.1)/c.price,pf=c.price/1.1-c.ship-c.cost-c.price*ROY;
+ $('gm').textContent=(gm*100).toFixed(1)+'%';$('pf').textContent=yen(pf);
+ if(gm>=GO){vd.textContent='即決';vd.className='v v-go'}else if(gm>=MAXQ){vd.textContent='交渉';vd.className='v v-mid'}else{vd.textContent='見送り';vd.className='v v-no'}
+}
+['n-price','b1w','b1d','b1h','b2w','b2d','b2h','pcs','shipov','usd'].forEach(id=>$(id).addEventListener('input',update));
+const FORM=['n-name','n-cat','n-price','n-ref','b1w','b1d','b1h','b2w','b2d','b2h','pcs','shipov','usd','m-fac','m-booth','m-moq','m-port','m-country','m-size','m-note'];
+const DK='fair-new-draft';
+try{const d=JSON.parse(localStorage.getItem(DK)||'{}');FORM.forEach(id=>{if(d[id])$(id).value=d[id]})}catch(e){}
+FORM.forEach(id=>$(id).addEventListener('input',()=>{try{const d={};FORM.forEach(i=>d[i]=$(i).value);localStorage.setItem(DK,JSON.stringify(d))}catch(e){}}));
+
+// ===== 保存（IndexedDB） =====
+const MK='fair-new-memo-v1';let MEMOS=[];const DB={db:null,ok:false};const byNew=(a,b)=>b.id-a.id;
+const idbOpen=()=>new Promise(res=>{try{const r=indexedDB.open('fair-newfind',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('memos'))r.result.createObjectStore('memos',{keyPath:'id'})};r.onsuccess=()=>{DB.db=r.result;DB.ok=true;res(true)};r.onerror=()=>res(false);r.onblocked=()=>res(false)}catch(e){res(false)}});
+const saveMemos=()=>{if(DB.ok)return new Promise(res=>{try{const tx=DB.db.transaction('memos','readwrite');const st=tx.objectStore('memos');st.clear();MEMOS.forEach(m=>st.put(m));tx.oncomplete=()=>{res(true);showCap()};tx.onerror=()=>res(false);tx.onabort=()=>res(false)}catch(e){res(false)}});
+ try{localStorage.setItem(MK,JSON.stringify(MEMOS));showCap();return Promise.resolve(true)}catch(e){return Promise.resolve(false)}};
+const mb=n=>(n/1048576).toFixed(n<10485760?1:0)+'MB';
+async function showCap(){const el=$('m-cap');const size=new Blob([JSON.stringify(MEMOS)]).size,per=MEMOS.length?size/MEMOS.length:0;
+ let t=DB.ok?'保存先：大容量（スマホ内のデータベース）':'保存先：小容量（約5MB）';
+ if(DB.ok&&navigator.storage&&navigator.storage.estimate){try{const e=await navigator.storage.estimate();const free=Math.max(0,(e.quota||0)-(e.usage||0));t+='・メモ '+mb(size)+' 使用・空き 約'+mb(free)+'（写真付きであと約'+Math.floor(free/Math.max(per,300*1024)).toLocaleString()+'件）'}catch(e){}}
+ else if(!DB.ok){const left=Math.max(0,5*1048576-size*2);t+='・あと約'+mb(left)}el.textContent=t}
+async function loadMemos(){await idbOpen();let ls=[];try{ls=JSON.parse(localStorage.getItem(MK)||'[]')||[]}catch(e){}
+ if(DB.ok){const all=await new Promise(res=>{try{const r=DB.db.transaction('memos').objectStore('memos').getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>res([])}catch(e){res([])}});
+  if(ls.length){const ids=new Set(all.map(m=>m.id));ls.forEach(m=>{if(!ids.has(m.id))all.push(m)});MEMOS=all.sort(byNew);if(await saveMemos()){try{localStorage.removeItem(MK)}catch(e){}}}else MEMOS=all.sort(byNew);
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}}else MEMOS=ls;
+ drawMemos();showCap()}
+const shrink=f=>new Promise(res=>{const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,640/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.6))};im.onerror=()=>res(null);im.src=rd.result};rd.onerror=()=>res(null);rd.readAsDataURL(f)});
+let PH=[],FPH=null,mfilter='all';
+$('m-photo').addEventListener('change',async e=>{PH=[];for(const f of [...e.target.files].slice(0,3)){const d=await shrink(f);if(d)PH.push(d)}$('m-prev').replaceChildren(...PH.map(d=>Object.assign(document.createElement('img'),{src:d,alt:'写真'})))});
+$('m-fphoto').addEventListener('change',async e=>{const f=e.target.files[0];FPH=f?await shrink(f):null;$('m-fprev').replaceChildren(...(FPH?[Object.assign(document.createElement('img'),{src:FPH,alt:'工場名'})]:[]))});
+const v=id=>$(id).value.trim();
+const clearForm=()=>{FORM.forEach(id=>$(id).value='');try{localStorage.removeItem(DK)}catch(e){}$('m-photo').value='';PH=[];$('m-prev').replaceChildren();$('m-fphoto').value='';FPH=null;$('m-fprev').replaceChildren();update()};
+$('n-clear').addEventListener('click',()=>{const b=$('n-clear');if(b.dataset.armed){clearForm();delete b.dataset.armed;b.textContent='入力をクリア';$('m-msg').textContent='クリアしました'}else{b.dataset.armed='1';b.textContent='もう一度押すとクリア'}});
+$('m-add').addEventListener('click',async()=>{
+ const c=calc();
+ if(!v('n-name')){$('m-msg').textContent='商品名を入れてください';return}
+ let gm=null,pf=null,verdict='未判定';
+ if(c.cost!=null&&c.price){gm=1-((c.ship+c.cost)*1.1)/c.price;pf=c.price/1.1-c.ship-c.cost-c.price*ROY;verdict=gm>=GO?'即決':gm>=MAXQ?'交渉':'見送り'}
+ const d=new Date();
+ MEMOS.unshift({id:Date.now(),at:d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'),
+  name:v('n-name'),cat:v('n-cat'),ref:v('n-ref'),usd:c.usd,price:c.price,ship:c.ship,cbm:+c.cbm.toFixed(4),box:c.b1?c.b1.join('×')+(c.b2?' ＋ '+c.b2.join('×'):'')+(c.pcs>1?'（'+c.pcs+'個入）':''):'',
+  gm:gm!=null?+(gm*100).toFixed(1):null,profit:pf!=null?Math.round(pf):null,verdict,
+  go:c.price?lineAt(c.price,c.ship,c.cbm,GO):null,max:c.price?lineAt(c.price,c.ship,c.cbm,MAXQ):null,
+  need:c.cost!=null?Math.ceil(1.1*(c.ship+c.cost)/(1-GO)/10)*10:null,
+  fac:v('m-fac'),booth:v('m-booth'),moq:v('m-moq'),port:v('m-port'),country:v('m-country'),size:v('m-size'),note:v('m-note'),photos:PH.slice(),fphoto:FPH});
+ if(!(await saveMemos())){MEMOS[0].photos=[];MEMOS[0].fphoto=null;const ok=await saveMemos();$('m-msg').textContent=ok?'容量がいっぱいのため写真なしで保存しました':'保存できませんでした'}else $('m-msg').textContent='メモに追加しました（'+MEMOS.length+'件）';
+ clearForm();drawMemos();
+});
+const pillCls={即決:'p-go',交渉:'p-mid',見送り:'p-no'};
+const n2=x=>x==null?'—':x;
+function memoText(m){return ['【'+m.verdict+'】'+m.name+(m.cat?'（'+m.cat+'）':''),'日時：'+m.at,'工場：'+(m.fac||'—')+(m.booth?'／ブース '+m.booth:''),
+ '見積：'+(m.usd!=null?'$'+m.usd:'—')+(m.go!=null?'（即決 $'+m.go+'／上限 $'+m.max+'）':''),m.gm!=null?'粗利率：'+m.gm+'%／利益 ¥'+m.profit.toLocaleString()+'/個':'',m.need?'この見積なら売価の目安：¥'+m.need.toLocaleString()+'〜':'',
+ '売価：'+(m.price?'¥'+m.price.toLocaleString():'—')+(m.ref?'（相場：'+m.ref+'）':'')+'／送料：¥'+m.ship.toLocaleString()+(m.box?'／梱包：'+m.box+'／CBM：'+m.cbm:''),
+ m.size?'サイズ・材質：'+m.size:'',(m.moq?'MOQ：'+m.moq+'　':'')+(m.port?'FOB港：'+m.port+'　':'')+(m.country?'生産：'+m.country:''),m.note?'メモ：'+m.note:''].filter(x=>x&&x.trim()).join('\n')}
+function drawMemos(){
+ const cnt={即決:0,交渉:0,見送り:0,未判定:0};MEMOS.forEach(m=>cnt[m.verdict]=(cnt[m.verdict]||0)+1);
+ $('m-sum').textContent=MEMOS.length?'全'+MEMOS.length+'件（即決 '+cnt['即決']+'・交渉 '+cnt['交渉']+'・見送り '+cnt['見送り']+'・未判定 '+cnt['未判定']+'）。新しい順。':'まだメモはありません。';
+ $('m-filter').replaceChildren(...[['all','すべて'],['即決','即決'],['交渉','交渉'],['見送り','見送り'],['未判定','未判定']].map(([k,l])=>{const b=document.createElement('button');b.type='button';b.dataset.f=k;b.textContent=l+(k==='all'?'':'（'+cnt[k]+'）');b.setAttribute('aria-pressed',String(k===mfilter));return b}));
+ $('memos').replaceChildren(...MEMOS.filter(m=>mfilter==='all'||m.verdict===mfilter).map(m=>{
+  const box=document.createElement('article');box.className='memo';
+  const hd=document.createElement('div');hd.className='memo-head';const t=document.createElement('div');const b=document.createElement('b');b.textContent=m.name;const sm=document.createElement('div');sm.className='note';sm.style.margin='0';sm.textContent=(m.cat?m.cat+'・':'')+m.at;t.append(b,sm);
+  const pl=document.createElement('span');pl.className='pill '+(pillCls[m.verdict]||'p-na');pl.textContent=m.verdict;hd.append(t,pl);
+  const kv=document.createElement('div');kv.className='kv';
+  [['工場',(m.fac||'—')+(m.booth?'（'+m.booth+'）':'')],['見積',m.usd!=null?'$'+m.usd+(m.go!=null?'（即決 $'+m.go+'／上限 $'+m.max+'）':''):''],['粗利・利益',m.gm!=null?m.gm+'%・¥'+m.profit.toLocaleString()+'/個':''],['売価の目安',m.need?'¥'+m.need.toLocaleString()+'〜（粗利35%）':''],['売価・相場',(m.price?'¥'+m.price.toLocaleString():'')+(m.ref?'（'+m.ref+'）':'')],['梱包・CBM',m.box?m.box+'・'+m.cbm:''],['送料',m.ship?'¥'+m.ship.toLocaleString():''],['サイズ・材質',m.size],['MOQ',m.moq],['FOB港',m.port],['生産',m.country]].filter(([,x])=>x).forEach(([k,x])=>{const d=document.createElement('div');const s=document.createElement('span');s.textContent=k+'　';d.append(s,document.createTextNode(x));kv.append(d)});
+  box.append(hd,kv);
+  if(m.note){const n=document.createElement('div');n.style.fontSize='13px';n.style.whiteSpace='pre-wrap';n.textContent=m.note;box.append(n)}
+  const allp=[...(m.fphoto?[m.fphoto]:[]),...(m.photos||[])];if(allp.length){const ph=document.createElement('div');ph.className='photos';ph.append(...allp.map((d,ix)=>{const i=document.createElement('img');i.src=d;i.alt=(m.fphoto&&ix===0)?'工場名':m.name;if(m.fphoto&&ix===0)i.style.outline='2px solid var(--acc)';return i}));box.append(ph)}
+  const ac=document.createElement('div');ac.className='acts';
+  const c1=document.createElement('button');c1.className='btn';c1.type='button';c1.textContent='この1件をコピー';c1.dataset.copy=m.id;
+  const c2=document.createElement('button');c2.className='btn';c2.type='button';c2.textContent='削除';c2.dataset.del=m.id;ac.append(c1,c2);box.append(ac);return box}));
+}
+$('m-filter').addEventListener('click',e=>{const b=e.target.closest('button');if(b){mfilter=b.dataset.f;drawMemos()}});
+const copyText=async(txt,el)=>{try{await navigator.clipboard.writeText(txt);el.textContent='コピーしました'}catch(e){const ta=$('m-text');ta.hidden=false;ta.value=txt;ta.focus();ta.select();el.textContent='下の文字を長押ししてコピーしてください'}};
+$('memos').addEventListener('click',e=>{const c=e.target.closest('[data-copy]');if(c){const m=MEMOS.find(x=>String(x.id)===c.dataset.copy);if(m)copyText(memoText(m),$('m-out'));return}
+ const d=e.target.closest('[data-del]');if(d){if(d.dataset.armed){MEMOS=MEMOS.filter(x=>String(x.id)!==d.dataset.del);saveMemos();drawMemos()}else{d.dataset.armed='1';d.textContent='もう一度押すと削除'}}});
+$('m-copy').addEventListener('click',()=>{if(!MEMOS.length){$('m-out').textContent='メモがありません';return}copyText(MEMOS.map(memoText).join('\n\n―――――\n\n'),$('m-out'))});
+const saveFile=async(name,text,type)=>{const file=new File([text],name,{type});
+ try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return 'share'}}catch(e){if(e&&e.name==='AbortError')return 'cancel'}
+ const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.append(a);a.click();a.remove();return 'download'};
+const stamp=()=>{const d=new Date();return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')};
+$('m-csv').addEventListener('click',async()=>{if(!MEMOS.length){$('m-out').textContent='メモがありません';return}
+ const H=['日時','判定','商品','ジャンル','工場','ブース','見積$','即決$','上限$','粗利率%','利益/個','売価','相場メモ','売価の目安(35%)','送料','梱包','CBM','サイズ・材質','MOQ','FOB港','生産','メモ'];
+ const q=x=>'"'+String(x??'').replace(/"/g,'""')+'"';
+ const csv='﻿'+[H.join(','),...MEMOS.map(m=>[m.at,m.verdict,m.name,m.cat,m.fac,m.booth,m.usd,m.go,m.max,m.gm,m.profit,m.price,m.ref,m.need,m.ship,m.box,m.cbm,m.size,m.moq,m.port,m.country,m.note].map(q).join(','))].join('\r\n');
+ try{const how=await saveFile('fair_newfind_'+stamp()+'.csv',csv,'text/csv');$('m-out').textContent=how==='cancel'?'キャンセルしました':'CSVを保存しました'}catch(e){copyText(csv,$('m-out'))}});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('m-rep').addEventListener('click',async()=>{
+ if(!MEMOS.length){$('m-out').textContent='メモがありません';return}
+ const d=new Date(),cnt={即決:0,交渉:0,見送り:0,未判定:0};MEMOS.forEach(m=>cnt[m.verdict]=(cnt[m.verdict]||0)+1);
+ const col={即決:'#1f7a45',交渉:'#b26a00',見送り:'#c0392b'},order={即決:0,交渉:1,未判定:2,見送り:3};
+ const row=(k,x)=>x?`<tr><th>${esc(k)}</th><td>${esc(x)}</td></tr>`:'';
+ const cards=MEMOS.slice().sort((a,b)=>(order[a.verdict]-order[b.verdict])||b.id-a.id).map(m=>`<article><header><div><h2>${esc(m.name)}</h2><p>${esc(m.cat||'')}${m.cat?'・':''}${esc(m.at)}</p></div><span class="pill" style="background:${col[m.verdict]||'#777'}">${esc(m.verdict)}</span></header><div class="body">${(m.fphoto||(m.photos&&m.photos.length))?`<div class="ph">${m.fphoto?`<figure style="margin:0"><img src="${m.fphoto}" alt="工場名"><figcaption style="font-size:11px;color:#5d6678">工場名</figcaption></figure>`:''}${(m.photos||[]).map(s=>`<img src="${s}" alt="${esc(m.name)}">`).join('')}</div>`:''}<table>${row('工場',(m.fac||'—')+(m.booth?'（ブース '+m.booth+'）':''))}${row('見積',m.usd!=null?'$'+m.usd+(m.go!=null?'（即決 $'+m.go+'／上限 $'+m.max+'）':''):'')}${row('粗利率・利益',m.gm!=null?m.gm+'%・¥'+m.profit.toLocaleString()+'/個':'')}${row('売価の目安',m.need?'¥'+m.need.toLocaleString()+'〜（粗利35%）':'')}${row('売価・相場',(m.price?'¥'+m.price.toLocaleString():'')+(m.ref?'（'+m.ref+'）':''))}${row('梱包・CBM',m.box?m.box+'・'+m.cbm:'')}${row('送料',m.ship?'¥'+m.ship.toLocaleString():'')}${row('サイズ・材質',m.size)}${row('MOQ',m.moq)}${row('FOB港',m.port)}${row('生産',m.country)}${row('メモ',m.note)}</table></div></article>`).join('\n');
+ const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>交易会 新商品レポート ${stamp()}</title><style>body{margin:0;background:#f5f6f8;color:#1c2230;font:14px/1.5 -apple-system,"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;padding:16px}main{max-width:900px;margin:0 auto;display:grid;gap:12px}h1{font-size:20px;margin:0}.sum{color:#5d6678;margin:2px 0 8px}article{background:#fff;border:1px solid #dde1e8;border-radius:12px;padding:14px;break-inside:avoid}header{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}h2{font-size:16px;margin:0}header p{margin:0;color:#5d6678;font-size:12px}.pill{color:#fff;font-weight:700;font-size:12px;padding:2px 10px;border-radius:999px;white-space:nowrap}.body{display:grid;gap:10px;margin-top:8px}.ph{display:flex;gap:6px;flex-wrap:wrap}.ph img{width:min(100%,260px);border-radius:8px;object-fit:contain;background:#f5f6f8}table{border-collapse:collapse;width:100%}th{text-align:left;color:#5d6678;font-weight:500;width:8em;vertical-align:top;padding:3px 8px 3px 0}td{padding:3px 0;white-space:pre-wrap}</style></head><body><main><h1>交易会 新商品レポート</h1><p class="sum">${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} 作成・全${MEMOS.length}件（即決 ${cnt['即決']}・交渉 ${cnt['交渉']}・見送り ${cnt['見送り']}・未判定 ${cnt['未判定']}）</p>${cards}</main></body></html>`;
+ try{const how=await saveFile('fair_newfind_report_'+stamp()+'.html',html,'text/html');$('m-out').textContent=how==='cancel'?'キャンセルしました':'写真つきレポートを保存しました'}catch(e){$('m-out').textContent='保存できませんでした'}});
+const BK='fair-new-backup-at';
+const showLast=()=>{let t='';try{t=localStorage.getItem(BK)||''}catch(e){}$('bk-last').textContent=t?'前回のバックアップ：'+t:'まだバックアップしていません'};
+$('bk-save').addEventListener('click',async()=>{const d=new Date();const data=JSON.stringify({app:'fair-newfind',v:1,saved:d.toISOString(),memos:MEMOS});
+ try{const how=await saveFile('fair_newfind_backup_'+stamp()+'.json',data,'application/json');if(how==='cancel'){$('bk-msg').textContent='キャンセルしました';return}
+  try{localStorage.setItem(BK,(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+'（'+MEMOS.length+'件）')}catch(e){}showLast();$('bk-msg').textContent='保存しました'}catch(e){$('bk-msg').textContent='保存できませんでした'}});
+$('bk-load').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+ rd.onload=async()=>{try{const j=JSON.parse(rd.result);if(j.app!=='fair-newfind')throw 0;const ids=new Set(MEMOS.map(m=>m.id));let add=0;(j.memos||[]).forEach(m=>{if(!ids.has(m.id)){MEMOS.push(m);add++}});MEMOS.sort(byNew);const ok=await saveMemos();drawMemos();$('bk-msg').textContent=ok?'読み込みました（'+add+'件追加）':'容量がいっぱいで保存できませんでした'}catch(err){$('bk-msg').textContent='このファイルは読み込めません（新商品チェッカーのバックアップを選んでください）'}e.target.value=''};rd.readAsText(f)});
+update();loadMemos();showLast();
+</script><script>
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(()=>{const st=document.getElementById('pwa-st');const ok=()=>{if(st)st.textContent='オフライン準備OK（ネットなしで開けます）'};if(navigator.serviceWorker.controller)ok();else navigator.serviceWorker.addEventListener('controllerchange',ok)}).catch(()=>{}))}
+</script></body></html>

@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>交易会 即決チェッカー</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f4e78">
+<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="即決チェッカー">
+<style>
+:root{--bg:#f6f7f5;--panel:#fff;--fg:#1d2420;--muted:#5f6b64;--line:#dde3df;--go:#1f7a45;--mid:#b26a00;--no:#c0392b;--acc:#1f4e78;--chg:#fff4d6;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--panel:#1b211e;--fg:#e8ede9;--muted:#9aa7a0;--line:#2c3530;--go:#4cc27e;--mid:#f0a640;--no:#ff7a6b;--acc:#7fb2e5;--chg:#3a3218;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+.wrap{max-width:980px;margin:0 auto;display:grid;gap:12px}
+h1{font-size:22px;margin:0}.take{color:var(--muted);margin:2px 0 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+h2{font-size:16px;margin:0 0 6px}h3{font-size:14px;margin:12px 0 6px}
+.note{color:var(--muted);font-size:12px;margin:0 0 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:8px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+label{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+select,input{font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);width:100%;min-width:0}
+.g3 input{padding:10px 8px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr));gap:8px;margin-top:10px}
+.out div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg)}
+.out span{display:block;font-size:12px;color:var(--muted)}
+.out b{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.v{font-size:24px!important;font-weight:700!important}
+.v-go{color:var(--go)}.v-mid{color:var(--mid)}.v-no{color:var(--no)}
+.rk{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:10px;font-size:13px}
+.rk a{color:var(--acc);word-break:break-all}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.btn{font:inherit;font-size:14px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.btn.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.chips button{font:inherit;font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.chips button[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.box{overflow:auto;max-height:70vh;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:var(--panel);text-align:left;font-size:12px;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);z-index:1}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr[data-key]{cursor:pointer}
+tr.chg td{background:var(--chg)}
+.num{text-align:right;white-space:nowrap}
+.sku b{font-weight:600}.sku small{display:block;color:var(--muted);font-size:12px}
+.go{color:var(--go);font-weight:700;font-size:1.05em}.mid{color:var(--mid);font-weight:600}
+.badge{display:inline-block;font-size:11px;padding:1px 6px;border-radius:999px;background:var(--mid);color:#fff;margin-left:4px;vertical-align:middle}
+tr.tp td{background:var(--bg);font-weight:600;font-size:12px;color:var(--muted)}
+textarea{width:100%;font:12px/1.4 ui-monospace,Menlo,monospace;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
+@media (max-width:640px){.hide{display:none}}
+.memo-form{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.memo{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg);display:grid;gap:6px}
+.memo-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.memo-head b{font-size:15px}
+.pill{font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;color:#fff;white-space:nowrap}
+.p-go{background:var(--go)}.p-mid{background:var(--mid)}.p-no{background:var(--no)}.p-na{background:var(--muted)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:4px 12px;font-size:13px}
+.kv span{color:var(--muted)}
+.memo img{max-width:100%;max-height:220px;border-radius:8px;object-fit:contain;background:var(--panel)}
+.memo .acts{display:flex;gap:8px}
+.memos{display:grid;gap:10px}
+.photos{display:flex;gap:6px;flex-wrap:wrap}.photos img{width:80px;height:80px;object-fit:cover;border-radius:8px}
+</style></head><body>
+<div class="wrap">
+<header><h1>交易会 即決チェッカー</h1><p class="note" id="pwa-st" style="margin:2px 0 0"></p><p class="take" id="take"></p></header>
+<section class="card" id="calc">
+<h2>見積チェック</h2>
+<p class="note">商品を選んで工場の見積（FOB $）を入れると、粗利と判定が出ます。下の一覧の行をタップしても選べます。ネット不要。</p>
+<div class="grid">
+<label for="sel">商品・SKU<select id="sel"></select></label>
+<label for="usd">工場の見積 FOB（$）<input id="usd" type="number" inputmode="decimal" min="0" step="0.1" placeholder="例 85"></label>
+<label for="price">売価（税込）<input id="price" type="number" inputmode="numeric" min="0" step="100"></label>
+</div>
+<div class="out" aria-live="polite">
+<div><span>判定</span><b class="v" id="verdict">—</b></div>
+<div><span>粗利率</span><b id="gm">—</b></div>
+<div><span>予想利益／個（ロイヤリティ8%後）</span><b id="pf">—</b></div>
+<div><span>即決 $ ／ 上限 $</span><b id="line">—</b></div>
+</div>
+<p class="note" id="detail" style="margin-top:8px"></p>
+<div class="rk" id="rk"></div>
+
+<h3>梱包・送料を更新（工場に聞いたら）</h3>
+<p class="note">カートンサイズ（cm）を入れると、送料（高木製綿の料金表）とCBMを自動で計算し直します。送料を直接入れることもできます。入れた値はこのスマホに保存され、一覧の$にも反映されます。</p>
+<div class="grid">
+<label>箱1（幅・奥行・高さ cm）<span class="g3"><input id="b1w" type="number" inputmode="decimal" aria-label="箱1 幅"><input id="b1d" type="number" inputmode="decimal" aria-label="箱1 奥行"><input id="b1h" type="number" inputmode="decimal" aria-label="箱1 高さ"></span></label>
+<label>箱2（あれば）<span class="g3"><input id="b2w" type="number" inputmode="decimal" aria-label="箱2 幅"><input id="b2d" type="number" inputmode="decimal" aria-label="箱2 奥行"><input id="b2h" type="number" inputmode="decimal" aria-label="箱2 高さ"></span></label>
+<label for="shipov">送料を直接入力（円・空欄なら自動）<input id="shipov" type="number" inputmode="numeric" min="0" step="10"></label>
+<label for="pcs">1カートンの入数（まとめ箱なら）<input id="pcs" type="number" inputmode="numeric" min="1" step="1" placeholder="1"></label>
+</div>
+<div class="btns"><button class="btn pri" id="save" type="button">この商品に保存</button><button class="btn" id="reset" type="button">この商品を元に戻す</button><span class="note" id="saved" style="align-self:center;margin:0"></span></div>
+<div class="memo-form">
+<h3 style="margin-top:0">この見積をメモに残す</h3>
+<p class="note">見積チェックの結果（判定・粗利・利益・送料・CBM）に、工場の情報を足して1件ずつ保存します。</p>
+<div class="grid">
+<label for="m-fac">工場名<input id="m-fac" type="text" placeholder="例 Foshan ○○ Furniture"></label>
+<label for="m-booth">ブース番号<input id="m-booth" type="text" placeholder="例 2期 12.1 F23"></label>
+<label for="m-moq">MOQ<input id="m-moq" type="text" placeholder="例 1コンテナ / 50台"></label>
+<label for="m-port">FOB港<input id="m-port" type="text" placeholder="例 深圳 / 寧波 / ホーチミン"></label>
+<label for="m-country">生産国・工場の場所<input id="m-country" type="text" placeholder="例 ベトナム工場あり"></label>
+</div>
+<label for="m-note" style="margin-top:8px">メモ（仕様・カラー・サンプル・交渉の余地など）<textarea id="m-note" rows="3"></textarea></label>
+<label for="m-fphoto" style="margin-top:8px">工場名の写真（看板・名刺など）<input id="m-fphoto" type="file" accept="image/*"></label>
+<div class="photos" id="m-fprev"></div>
+<label for="m-photo" style="margin-top:8px">商品の写真（任意・3枚まで）<input id="m-photo" type="file" accept="image/*" multiple></label>
+<div class="photos" id="m-prev"></div>
+<div class="btns"><button class="btn pri" id="m-add" type="button">メモに追加</button><span class="note" id="m-msg" style="align-self:center;margin:0"></span></div>
+</div>
+</section>
+
+<section class="card" id="memos-card">
+<h2>見積メモ帳</h2>
+<p class="note" id="m-cap" style="margin:0 0 4px"></p>
+<p class="note" id="m-sum">まだメモはありません。上の見積チェックで「メモに追加」を押すとここに並びます。</p>
+<div class="chips" id="m-filter"></div>
+<div class="memos" id="memos"></div>
+<div class="btns"><button class="btn" id="m-copy" type="button">全部テキストでコピー</button><button class="btn pri" id="m-rep" type="button">写真つきレポートで保存</button><button class="btn" id="m-csv" type="button">CSVで保存（文字のみ）</button><span class="note" id="m-out" style="align-self:center;margin:0"></span></div>
+<textarea id="m-text" rows="4" readonly style="margin-top:8px" hidden></textarea>
+<h3>バックアップ（スマホの外に置く）</h3>
+<p class="note">メモ・写真・更新した梱包をまとめて1つのファイルに保存します。保存したファイルはWeChatの「文件传输助手（ファイル転送）」で自分に送るか、iCloud Drive に入れておくと安心です。別のスマホやPCでこのページを開いて「読み込む」と元に戻せます。</p>
+<div class="btns"><button class="btn pri" id="bk-save" type="button">バックアップを保存</button><label class="btn" for="bk-load" style="display:inline-flex;align-items:center;cursor:pointer">バックアップを読み込む<input id="bk-load" type="file" hidden></label><span class="note" id="bk-msg" style="align-self:center;margin:0"></span></div>
+<p class="note" id="bk-last" style="margin-top:6px"></p>
+</section>
+
+<section class="card">
+<h2>トピック別 即決ライン</h2>
+<p class="note">緑＝この$以下なら即決（粗利35%）。オレンジ＝ここまでなら交渉（粗利25%＝既存直貿の平均並み）。売価は楽天の売れ筋（レビュー件数順）を参考に設定。<span class="badge">更新</span>は梱包・送料を変えた商品。</p>
+<div class="chips" id="chips"></div>
+<input id="q" type="search" placeholder="商品名・No で絞り込み（例：セラミック、I-33）" aria-label="絞り込み">
+<div class="box"><table><thead><tr><th>商品・SKU</th><th class="num">売価</th><th class="num">即決 $</th><th class="num">上限 $</th><th class="num hide">送料</th><th class="hide">楽天 売れ筋</th></tr></thead><tbody id="body"></tbody></table></div>
+</section>
+
+<section class="card">
+<h2>更新した梱包・送料</h2>
+<p class="note">帰ってから企画書に反映するときは、この内容をコピーしてClaudeに送ってください。</p>
+<textarea id="exp" rows="5" readonly></textarea>
+<div class="btns"><button class="btn" id="copy" type="button">コピー</button><button class="btn" id="resetall" type="button">すべて元に戻す</button><span class="note" id="copied" style="align-self:center;margin:0"></span></div>
+</section>
+<p class="note">計算は直貿商品データと同じ：下代＝$×170＋輸入諸掛（40万円×CBM÷68）、送料は高木製綿の料金表（3辺合計、260サイズ超は推定：280＝6,500円／300＝8,000円／300超＝10,000円）、粗利率＝1−(送料＋下代)×1.1÷売価、ロイヤリティ8%。梱包サイズは参考品からの推定。楽天価格は2026/10/21時点。</p>
+</div>
+<script>
+const ROWS=[{"key":"I-2 セラミック木製 120 単品","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-2","sku":"木脚セラミック 120","price":29800,"b1":[128,81,10],"b2":[85,25,15],"box":"128×81×10 ＋ 85×25×15","ship_yen":4005,"cbm":0.1356,"memo":"天板＋木脚の2梱包","rk_shop":"インクラッソ","rk_price":"29,800円（幅120）","rk_reviews":9,"rk_url":"https://item.rakuten.co.jp/incrasso/pro-dta-0209/","rk_note":"木脚系セラミック120は3万円前後。最安の売れ筋はMUTUKI 120＝15,999円（スチール脚・751件）"},{"key":"I-2 セラミック木製 140 単品","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-2","sku":"木脚セラミック 140","price":39800,"b1":[150,86,10],"b2":[85,25,15],"box":"150×86×10 ＋ 85×25×15","ship_yen":6026,"cbm":0.1609,"memo":"","rk_shop":"MUTUKI（楽天1位・3年保証）","rk_price":"47,500円（幅140）","rk_reviews":142,"rk_url":"https://item.rakuten.co.jp/mutuki/s35kn-001-cz-table/","rk_note":"FLAILA 140＝62,980円（21件）。上位品より下で設定"},{"key":"I-3 セラミック大型 120","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-3","sku":"アーチ脚 高級セラミック 120","price":29800,"b1":[128,81,10],"b2":[80,40,15],"box":"128×81×10 ＋ 80×40×15","ship_yen":4005,"cbm":0.1517,"memo":"アーチ板脚","rk_shop":"MUTUKI（楽天1位）","rk_price":"15,999円（幅120）","rk_reviews":751,"rk_url":"https://item.rakuten.co.jp/mutuki/9513-604hs-table/","rk_note":"売れ筋はスチール脚の1.6万円台。アーチ板脚の差別化で3万円弱"},{"key":"I-3 セラミック大型 160","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-3","sku":"アーチ脚 高級セラミック 160","price":47800,"b1":[170,96,10],"b2":[80,40,15],"box":"170×96×10 ＋ 80×40×15","ship_yen":7363,"cbm":0.2112,"memo":"天板箱280サイズ超＝送料推定","rk_shop":"MUTUKI（楽天1位・3年保証）","rk_price":"51,667円（幅160）","rk_reviews":142,"rk_url":"https://item.rakuten.co.jp/mutuki/s35kn-001-cz-table/","rk_note":"最安売れ筋 MUTUKI 160＝23,999円（751件）"},{"key":"I-21 セラミック 大川 120","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-21","sku":"大川仕上げ 木脚セラミック 120","price":29800,"b1":[128,81,10],"b2":[85,25,15],"box":"128×81×10 ＋ 85×25×15","ship_yen":4005,"cbm":0.1356,"memo":"","rk_shop":"7インテリア","rk_price":"44,800円〜（丸100）","rk_reviews":149,"rk_url":"https://item.rakuten.co.jp/auc-nana/7dt100capemimo/","rk_note":"木脚・丸型セラミックの売れ筋"},{"key":"I-21 セラミック 大川 160","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-21","sku":"大川仕上げ 木脚セラミック 160","price":47800,"b1":[170,96,10],"b2":[85,25,15],"box":"170×96×10 ＋ 85×25×15","ship_yen":7363,"cbm":0.1951,"memo":"送料推定","rk_shop":"MUTUKI（楽天1位・3年保証）","rk_price":"51,667円（幅160）","rk_reviews":142,"rk_url":"https://item.rakuten.co.jp/mutuki/s35kn-001-cz-table/","rk_note":"FLAILA 160＝65,980円（43件）"},{"key":"I-33 セラミック4人用 120","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-33","sku":"韓国風 木脚セラミック 4人用 120","price":29800,"b1":[128,86,10],"b2":[85,25,15],"box":"128×86×10 ＋ 85×25×15","ship_yen":4865,"cbm":0.142,"memo":"","rk_shop":"MUTUKI（楽天1位）","rk_price":"15,999円（幅120）","rk_reviews":751,"rk_url":"https://item.rakuten.co.jp/mutuki/9513-604hs-table/","rk_note":"木脚セラミック120は3万円前後（インクラッソ29,800円）"},{"key":"I-33 セラミック4人用 160","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-33","sku":"韓国風 木脚セラミック 6人用 160","price":47800,"b1":[168,86,10],"b2":[85,25,15],"box":"168×86×10 ＋ 85×25×15","ship_yen":7363,"cbm":0.1764,"memo":"送料推定","rk_shop":"MUTUKI（楽天1位・3年保証）","rk_price":"51,667円（幅160）","rk_reviews":142,"rk_url":"https://item.rakuten.co.jp/mutuki/s35kn-001-cz-table/","rk_note":"最安売れ筋 MUTUKI 160＝23,999円"},{"key":"I-34 セラミック2人用 80角","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-34","sku":"木脚セラミック 2人用 正方形80","price":24800,"b1":[88,88,8],"b2":[80,20,15],"box":"88×88×8 ＋ 80×20×15","ship_yen":3286,"cbm":0.086,"memo":"","rk_shop":"7インテリア","rk_price":"44,800円〜（丸100）","rk_reviews":149,"rk_url":"https://item.rakuten.co.jp/auc-nana/7dt100capemimo/","rk_note":"2人用80角の売れ筋は少ない。丸100の下で設定"},{"key":"I-35 セラミック 固定式 120（3色）","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-35","sku":"激安セラミック 120（スチール脚）","price":16999,"b1":[128,88,10],"b2":[78,15,10],"box":"128×88×10 ＋ 78×15×10","ship_yen":4865,"cbm":0.1243,"memo":"現行16,999円は利益が出にくい→新工場で要確認","rk_shop":"MUTUKI（楽天1位）","rk_price":"15,999円（幅120）","rk_reviews":751,"rk_url":"https://item.rakuten.co.jp/mutuki/9513-604hs-table/","rk_note":"自社84400001＝16,999円（69件）"},{"key":"I-35 セラミック 固定式 160（3色）","topic_no":1,"topic":"セラミック天板ダイニング","code":"I-35","sku":"激安セラミック 160（スチール脚）","price":23999,"b1":[168,88,10],"b2":[78,15,10],"box":"168×88×10 ＋ 78×15×10","ship_yen":7363,"cbm":0.1595,"memo":"売価は仮","rk_shop":"MUTUKI（楽天1位）","rk_price":"23,999円（幅160）","rk_reviews":751,"rk_url":"https://item.rakuten.co.jp/mutuki/9513-604hs-table/","rk_note":"MUTUKI 140＝18,999円 / 180＝27,999円"},{"key":"I-6 ラバーウッド×アイアン 120","topic_no":2,"topic":"木製ダイニングテーブル","code":"I-6","sku":"木×アイアン脚 テーブル 120","price":16800,"b1":[128,88,12],"b2":null,"box":"128×88×12","ship_yen":4002,"cbm":0.1352,"memo":"","rk_shop":"エア・リゾーム","rk_price":"10,990円〜","rk_reviews":66,"rk_url":"https://item.rakuten.co.jp/air-rhizome/air-dining-t10/","rk_note":"天然木×アイアンは1.1〜2万円帯"},{"key":"I-7 タイル脚 160","topic_no":2,"topic":"木製ダイニングテーブル","code":"I-7","sku":"タイル脚 カフェ風テーブル 160","price":39800,"b1":[168,93,8],"b2":[80,20,75],"box":"168×93×8 ＋ 80×20×75","ship_yen":8354,"cbm":0.245,"memo":"タイル脚は重い","rk_shop":"家具のトロフ","rk_price":"11,999円〜","rk_reviews":50,"rk_url":"https://item.rakuten.co.jp/kagunotorofu/tr010432/","rk_note":"タイル脚テーブルの売れ筋は少ない（ニッチ）。売価は据え置き"},{"key":"I-13 アッシュ突板 組立簡単 140","topic_no":2,"topic":"木製ダイニングテーブル","code":"I-13","sku":"組立かんたん アッシュ木目テーブル 140","price":29800,"b1":[146,82,10],"b2":null,"box":"146×82×10","ship_yen":4002,"cbm":0.1197,"memo":"","rk_shop":"KAGUCOCO","rk_price":"36,999円","rk_reviews":16,"rk_url":"https://item.rakuten.co.jp/kagucoco/00-000067/","rk_note":"河口家具 KT 72,380円〜（190件）"},{"key":"I-25 メラミンV字脚 120 スチール脚","topic_no":2,"topic":"木製ダイニングテーブル","code":"I-25","sku":"傷に強い メラミン V字脚 120（スチール）","price":19800,"b1":[128,68,12],"b2":null,"box":"128×68×12","ship_yen":3142,"cbm":0.1044,"memo":"","rk_shop":"マナベ家具","rk_price":"20,990円（幅120・熱キズ汚れに強い）","rk_reviews":10,"rk_url":"https://item.rakuten.co.jp/manabe-interior-hearts/3002499/","rk_note":"エア・リゾーム 10,990円〜（66件）"},{"key":"I-25 メラミンV字脚 160 木脚","topic_no":2,"topic":"木製ダイニングテーブル","code":"I-25","sku":"傷に強い メラミン V字脚 160（木脚）","price":39800,"b1":[168,88,12],"b2":null,"box":"168×88×12","ship_yen":6500,"cbm":0.1774,"memo":"送料推定","rk_shop":"家具の産直工房","rk_price":"59,400円〜（メラミントップ）","rk_reviews":9,"rk_url":"https://item.rakuten.co.jp/sanshow/10002693/","rk_note":"クロート 77,800円〜（49件）"},{"key":"I-26 伸長楕円 160/230","topic_no":2,"topic":"木製ダイニングテーブル","code":"I-26","sku":"伸びる楕円テーブル 160→230","price":49800,"b1":[170,105,12],"b2":[80,40,20],"box":"170×105×12 ＋ 80×40×20","ship_yen":8863,"cbm":0.2782,"memo":"送料推定","rk_shop":"Branchpoint","rk_price":"49,980円〜（伸縮 丸・楕円）","rk_reviews":31,"rk_url":"https://item.rakuten.co.jp/t-interior/qsf001/","rk_note":"家具専門店 77,600円（36件）/ タンスのゲン 39,999円（25件）"},{"key":"I-30 高さ変えられる 100","topic_no":2,"topic":"木製ダイニングテーブル","code":"I-30","sku":"高さが変わる 木のテーブル 100","price":16800,"b1":[108,78,10],"b2":null,"box":"108×78×10","ship_yen":2423,"cbm":0.0842,"memo":"","rk_shop":"MODEL","rk_price":"11,480円（昇降テーブル）","rk_reviews":674,"rk_url":"https://item.rakuten.co.jp/model-bon/bc-7127p/","rk_note":"売れ筋は昇降式の1.1万円台。継脚の木製は差別化"},{"key":"I-31 ステンレス脚オーク 150","topic_no":2,"topic":"木製ダイニングテーブル","code":"I-31","sku":"ステンレス脚 高級オークテーブル 150","price":49800,"b1":[158,88,10],"b2":[80,15,75],"box":"158×88×10 ＋ 80×15×75","ship_yen":7015,"cbm":0.229,"memo":"","rk_shop":"家具アイランド","rk_price":"54,800円（150×90）","rk_reviews":21,"rk_url":"https://item.rakuten.co.jp/eckagudepo/sanjp-0891/","rk_note":"タンスのゲン 69,999円〜（36件）"},{"key":"I-36 伸長円形 φ105","topic_no":2,"topic":"木製ダイニングテーブル","code":"I-36","sku":"伸びる丸テーブル 細脚 φ105","price":39800,"b1":[112,112,12],"b2":[80,20,15],"box":"112×112×12 ＋ 80×20×15","ship_yen":4865,"cbm":0.1745,"memo":"","rk_shop":"タンスのゲン（楽天1位）","rk_price":"39,999円（伸長式 半円形）","rk_reviews":77,"rk_url":"https://item.rakuten.co.jp/tansu/49600811/","rk_note":"自社の伸長式。細脚タイプで横並び"},{"key":"I-1 半円テーブル 幅100","topic_no":3,"topic":"スチール脚×メラミン デスク・テーブル","code":"I-1","sku":"壁付け 半円テーブル 100","price":12999,"b1":[105,65,10],"b2":null,"box":"105×65×10","ship_yen":1854,"cbm":0.0683,"memo":"","rk_shop":"サムライ家具","rk_price":"13,990円","rk_reviews":117,"rk_url":"https://item.rakuten.co.jp/double-oo/25-320/","rk_note":"一人暮らし向け半円テーブル"},{"key":"I-4 エッジ加工デスク 120","topic_no":3,"topic":"スチール脚×メラミン デスク・テーブル","code":"I-4","sku":"積層エッジ風 シンプルデスク 120","price":16999,"b1":[125,75,8],"b2":null,"box":"125×75×8","ship_yen":3142,"cbm":0.075,"memo":"既存 昇降デスク120（10,999円）と並ぶ","rk_shop":"エア・リゾーム","rk_price":"18,430円（120cm）","rk_reviews":478,"rk_url":"https://item.rakuten.co.jp/air-rhizome/miy-ar-dt06/","rk_note":""},{"key":"I-19 勉強机セット","topic_no":3,"topic":"スチール脚×メラミン デスク・テーブル","code":"I-19","sku":"集中ブース型 勉強机セット","price":24800,"b1":[85,65,12],"b2":[85,30,12],"box":"85×65×12 ＋ 85×30×12","ship_yen":2715,"cbm":0.0969,"memo":"2梱包","rk_shop":"LOWYA","rk_price":"24,990円〜","rk_reviews":530,"rk_url":"https://item.rakuten.co.jp/low-ya/f807-g1018-100/","rk_note":"3点セット学習机 65,470円（955件）"},{"key":"I-22 ソファ裏コンソール 120","topic_no":3,"topic":"スチール脚×メラミン デスク・テーブル","code":"I-22","sku":"ソファ裏 スリム棚（コンセント付）120","price":9980,"b1":[125,25,8],"b2":null,"box":"125×25×8","ship_yen":1189,"cbm":0.025,"memo":"","rk_shop":"山崎実業 tower","rk_price":"14,850円","rk_reviews":36,"rk_url":"https://item.rakuten.co.jp/alamode/3605-a430/","rk_note":"towerより下で設定"},{"key":"I-28 ソファダイニング3点 120","topic_no":3,"topic":"スチール脚×メラミン デスク・テーブル","code":"I-28","sku":"ソファダイニング 3点セット 120","price":49800,"b1":[125,75,12],"b2":[125,70,75],"box":"125×75×12 ＋ 125×70×75","ship_yen":9642,"cbm":0.7688,"memo":"ベンチ箱は別途。送料推定","rk_shop":"インテロー","rk_price":"117,999円","rk_reviews":157,"rk_url":"https://item.rakuten.co.jp/intelogue/a120440500046441/","rk_note":"LOWYA カレオス帯で設定"},{"key":"I-5 サイズオーダーラック 120×40","topic_no":4,"topic":"スチール収納・ラック","code":"I-5","sku":"サイズオーダー スチールラック","price":12980,"b1":[125,45,12],"b2":null,"box":"125×45×12","ship_yen":2423,"cbm":0.0675,"memo":"","rk_shop":"スターラック","rk_price":"26,466円","rk_reviews":3,"rk_url":"https://item.rakuten.co.jp/star-rack/300h4w2d4a-4/","rk_note":"サイズオーダーの売れ筋は少ない。据え置き"},{"key":"I-8 鉄板×木支柱 3段","topic_no":4,"topic":"スチール収納・ラック","code":"I-8","sku":"鉄板×木 オープンシェルフ 3段","price":9980,"b1":[72,42,12],"b2":null,"box":"72×42×12","ship_yen":863,"cbm":0.0363,"memo":"","rk_shop":"くらしのeショップ","rk_price":"8,999円〜","rk_reviews":964,"rk_url":"https://item.rakuten.co.jp/e-kurashi/q2d26/","rk_note":"ライフスタイル 14,020円（610件）"},{"key":"I-20 モジュールラック 幅60 2段","topic_no":4,"topic":"スチール収納・ラック","code":"I-20","sku":"モジュール収納 小さめ 幅60","price":8980,"b1":[65,35,12],"b2":null,"box":"65×35×12","ship_yen":863,"cbm":0.0273,"memo":"","rk_shop":"（該当少）","rk_price":"—","rk_reviews":0,"rk_url":"","rk_note":"楽天では同等品の売れ筋が見当たらず。既存品に準拠"},{"key":"I-24 モジュールラック 追加カラー","topic_no":4,"topic":"スチール収納・ラック","code":"I-24","sku":"モジュール収納 新色（既存品）","price":39980,"b1":[76,40,103],"b2":null,"box":"76×40×103","ship_yen":3142,"cbm":0.3131,"memo":"既存 b8-kr-mj-a（$150）と同じ","rk_shop":"Branchpoint","rk_price":"39,800円","rk_reviews":38,"rk_url":"https://item.rakuten.co.jp/t-interior/gfw008/","rk_note":"Branchpoint 29,980円〜（129件）"},{"key":"I-29 ナイトテーブル兼ドレッサー","topic_no":5,"topic":"木製収納・箱物","code":"I-29","sku":"LEDミラー付き ドレッサー兼ナイトテーブル","price":16980,"b1":[95,55,20],"b2":[50,42,50],"box":"95×55×20 ＋ 50×42×50","ship_yen":3041,"cbm":0.2095,"memo":"スツール別箱","rk_shop":"EJ通販","rk_price":"17,980円〜","rk_reviews":286,"rk_url":"https://item.rakuten.co.jp/ejtsuhan/doresa/","rk_note":"エムール 29,900円（170件）"},{"key":"I-32 蛇腹扉サイドボード 130","topic_no":5,"topic":"木製収納・箱物","code":"I-32","sku":"蛇腹扉 楕円サイドボード 130","price":59800,"b1":[138,46,82],"b2":null,"box":"138×46×82","ship_yen":6500,"cbm":0.5205,"memo":"完成品。送料推定","rk_shop":"ソファの山川","rk_price":"24,999円","rk_reviews":9,"rk_url":"https://item.rakuten.co.jp/yamakawakagu/yk6090/","rk_note":"蛇腹扉の売れ筋は少ない。関家具リンダ基準で据え置き"},{"key":"I-9 スワンチェア","topic_no":6,"topic":"チェア・ソファ（張り物）","code":"I-9","sku":"スワンチェア（リプロダクト）","price":29800,"b1":[80,75,80],"b2":null,"box":"80×75×80","ship_yen":4002,"cbm":0.48,"memo":"","rk_shop":"プレジャー","rk_price":"66,000円（本革）","rk_reviews":3,"rk_url":"https://item.rakuten.co.jp/auc-pleasure0905/suwan-brown1/","rk_note":"リプロダクトの売れ筋は少ない"},{"key":"I-10 包み込みダイニングチェア 1脚","topic_no":6,"topic":"チェア・ソファ（張り物）","code":"I-10","sku":"包み込み 肘付きダイニングチェア","price":9980,"b1":[58,58,42],"b2":null,"box":"58×58×42","ship_yen":1189,"cbm":0.1413,"memo":"既存 回転ダイニングチェア（b2/b3）は利益率6〜9%","rk_shop":"THN","rk_price":"6,000円","rk_reviews":35,"rk_url":"https://item.rakuten.co.jp/thnlight/chaird/","rk_note":"ニトリ イジー2 15,000円"},{"key":"I-11 パイプ パーソナルチェア","topic_no":6,"topic":"チェア・ソファ（張り物）","code":"I-11","sku":"パイプ脚 ふかふか1人掛けチェア","price":19800,"b1":[78,60,50],"b2":null,"box":"78×60×50","ship_yen":2423,"cbm":0.234,"memo":"既存 パーソナルチェア（12,800円）と同カテゴリ","rk_shop":"タンスのゲン","rk_price":"20,999円（リクライニングチェア）","rk_reviews":32,"rk_url":"https://item.rakuten.co.jp/tansu/2130013400/","rk_note":""},{"key":"I-14 メッシュ ハイバックチェア","topic_no":6,"topic":"チェア・ソファ（張り物）","code":"I-14","sku":"激安 メッシュ オフィスチェア","price":7980,"b1":[65,33,55],"b2":null,"box":"65×33×55","ship_yen":1189,"cbm":0.118,"memo":"既存 オフィスチェア（oc-1〜5）と同カテゴリ","rk_shop":"タンスのゲン（4年連続 最も売れた）","rk_price":"6,999円〜","rk_reviews":5518,"rk_url":"https://item.rakuten.co.jp/tansu/65090108/","rk_note":""},{"key":"I-17 あぐらチェア 追加カラー","topic_no":6,"topic":"チェア・ソファ（張り物）","code":"I-17","sku":"あぐらチェア 新色（既存品）","price":11800,"b1":[68,62,24],"b2":null,"box":"68×62×24","ship_yen":1189,"cbm":0.1012,"memo":"既存 b8-kr-chair-5（$33.95）の色追加","rk_shop":"ヤマソロ","rk_price":"14,800円","rk_reviews":2268,"rk_url":"https://item.rakuten.co.jp/alamode/42a-5660/","rk_note":"既存 b8-kr-chair-5 は11,800円"},{"key":"I-18 あぐらチェア ポケットコイル","topic_no":6,"topic":"チェア・ソファ（張り物）","code":"I-18","sku":"あぐらチェア 高級ポケットコイル版","price":19800,"b1":[75,70,65],"b2":null,"box":"75×70×65","ship_yen":3142,"cbm":0.3412,"memo":"既存 あぐらチェアの上位版","rk_shop":"ヤマソロ","rk_price":"16,800円","rk_reviews":1030,"rk_url":"https://item.rakuten.co.jp/alamode/20-517/","rk_note":"ポケットコイルの上位版としてヤマソロより少し上"},{"key":"I-23 ペット対応ゆるふわクッション","topic_no":6,"topic":"チェア・ソファ（張り物）","code":"I-23","sku":"ペットOK もこもこ大型クッション","price":12980,"b1":[60,60,40],"b2":null,"box":"60×60×40","ship_yen":1189,"cbm":0.144,"memo":"圧縮梱包前提","rk_shop":"neneno","rk_price":"6,480円〜（マルチクッション大型）","rk_reviews":435,"rk_url":"https://item.rakuten.co.jp/chair-bon/etc001274/","rk_note":"大型ソファ型で差別化"},{"key":"I-27 ごろ寝チェア シルバー脚","topic_no":6,"topic":"チェア・ソファ（張り物）","code":"I-27","sku":"ごろ寝チェア シルバー脚","price":14980,"b1":[85,70,40],"b2":null,"box":"85×70×40","ship_yen":2423,"cbm":0.238,"memo":"","rk_shop":"ココテリア","rk_price":"14,330円","rk_reviews":74,"rk_url":"https://item.rakuten.co.jp/cocoterior/c-air-flch-01/","rk_note":"SUWALABO 16,990円（53件）"},{"key":"I-12 L字アーム フロアライト","topic_no":7,"topic":"照明・小物","code":"I-12","sku":"L字アーム フロアライト","price":7980,"b1":[95,30,12],"b2":null,"box":"95×30×12","ship_yen":863,"cbm":0.0342,"memo":"","rk_shop":"ウォッチミー","rk_price":"7,980円","rk_reviews":520,"rk_url":"https://item.rakuten.co.jp/watch-me/dl022_led109/","rk_note":""},{"key":"I-15 フットレスト デスク下","topic_no":7,"topic":"照明・小物","code":"I-15","sku":"デスク下 フットレスト","price":4480,"b1":[50,40,10],"b2":null,"box":"50×40×10","ship_yen":794,"cbm":0.02,"memo":"","rk_shop":"イーサプライ","rk_price":"4,980円","rk_reviews":94,"rk_url":"https://item.rakuten.co.jp/esupply/eex-fr002/","rk_note":"サンワダイレクト 7,480円"},{"key":"I-16 ソファ角用 爪とぎ","topic_no":7,"topic":"照明・小物","code":"I-16","sku":"ソファ角に付ける 猫の爪とぎ","price":3980,"b1":[62,17,17],"b2":null,"box":"62×17×17","ship_yen":794,"cbm":0.0179,"memo":"","rk_shop":"ハピポート","rk_price":"2,190円〜（爪とぎ防止シート）","rk_reviews":647,"rk_url":"https://item.rakuten.co.jp/happiport/wagaya029/","rk_note":"家具角用の爪とぎは少ない"},{"key":"K-2 深型ステンレスフライパン 26cm","topic_no":8,"topic":"フライパン・鍋","code":"K-2","sku":"深型ステンレス フライパン 26cm","price":4980,"b1":[48,30,12],"b2":null,"box":"48×30×12","ship_yen":794,"cbm":0.0173,"memo":"","rk_shop":"ドウシシャ evercook","rk_price":"4,180円〜","rk_reviews":2219,"rk_url":"https://item.rakuten.co.jp/doshisha-marche/eifp26nv/","rk_note":"深型ステンレスは5,000円前後"},{"key":"K-2 深型フッ素フライパン 26cm","topic_no":8,"topic":"フライパン・鍋","code":"K-2","sku":"激安 深型フライパン 26cm","price":2780,"b1":[48,28,10],"b2":null,"box":"48×28×10","ship_yen":794,"cbm":0.0134,"memo":"","rk_shop":"貝印","rk_price":"1,730円〜","rk_reviews":2242,"rk_url":"https://item.rakuten.co.jp/kai/000dw5636/","rk_note":"evercook 4,180円〜"},{"key":"K-4 2段蒸し器セット","topic_no":8,"topic":"フライパン・鍋","code":"K-4","sku":"卓上鍋用 2段蒸し器セット","price":5980,"b1":[32,32,25],"b2":null,"box":"32×32×25","ship_yen":794,"cbm":0.0256,"memo":"","rk_shop":"NSW SHOP","rk_price":"2,680円〜（蒸籠）","rk_reviews":5241,"rk_url":"https://item.rakuten.co.jp/nswshop/sero-001/","rk_note":"ステンレス2段は4〜6千円帯"},{"key":"K-7 パンプレート 単品（取っ手付）","topic_no":8,"topic":"フライパン・鍋","code":"K-7","sku":"そのまま食卓へ お皿フライパン","price":3480,"b1":[30,28,10],"b2":null,"box":"30×28×10","ship_yen":699,"cbm":0.0084,"memo":"","rk_shop":"アンジェ","rk_price":"2,420円（そのまま食卓へ）","rk_reviews":80,"rk_url":"https://item.rakuten.co.jp/angers/164718/","rk_note":"Hetta! 3点 6,400円"},{"key":"K-7 パンプレート 3タイプセット","topic_no":8,"topic":"フライパン・鍋","code":"K-7","sku":"お皿フライパン 3種セット","price":7980,"b1":[32,30,25],"b2":null,"box":"32×30×25","ship_yen":794,"cbm":0.024,"memo":"","rk_shop":"CAROTE","rk_price":"3,998円〜（取っ手が取れる）","rk_reviews":3898,"rk_url":"https://item.rakuten.co.jp/cookware-carote/j05836/","rk_note":""},{"key":"N-3 仕切り付きフライパン","topic_no":8,"topic":"フライパン・鍋","code":"N-3","sku":"立てて収納 仕切り付きフライパン","price":1999,"b1":[40,24,12],"b2":null,"box":"40×24×12","ship_yen":699,"cbm":0.0115,"memo":"","rk_shop":"和平（Amazon）","rk_price":"2,154円（通常2,420円）","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/keikei/4582451315606/","rk_note":"Amazon月60万／けいけい 2,730円"},{"key":"K-3 セラミック＋チタン タンブラー","topic_no":9,"topic":"ステンレス 保存容器・ボウル・タンブラー","code":"K-3","sku":"金属臭なし セラミック タンブラー","price":4480,"b1":[12,12,26],"b2":null,"box":"12×12×26","ship_yen":624,"cbm":0.0037,"memo":"","rk_shop":"JUNTA（楽天1位）","rk_price":"5,500円〜","rk_reviews":2037,"rk_url":"https://item.rakuten.co.jp/juntakushop/10000040/","rk_note":"セラミックコーティング 4,980円〜（901件）"},{"key":"K-9 ステンレスボウル 3個セット","topic_no":9,"topic":"ステンレス 保存容器・ボウル・タンブラー","code":"K-9","sku":"フタ付き ステンレスボウル 3個","price":2980,"b1":[27,27,15],"b2":null,"box":"27×27×15","ship_yen":699,"cbm":0.0109,"memo":"","rk_shop":"霜山","rk_price":"2,200円（フタ付き3点）","rk_reviews":8,"rk_url":"https://item.rakuten.co.jp/ignis/2512sd1232-set/","rk_note":""},{"key":"K-10 ステンレス保存容器 3個セット","topic_no":9,"topic":"ステンレス 保存容器・ボウル・タンブラー","code":"K-10","sku":"ステンレス保存容器 3個セット","price":4980,"b1":[25,20,18],"b2":null,"box":"25×20×18","ship_yen":699,"cbm":0.009,"memo":"","rk_shop":"霜山","rk_price":"1,380円〜（フタ付きバット）","rk_reviews":75,"rk_url":"https://item.rakuten.co.jp/ignis/2410sd879-2set/","rk_note":""},{"key":"K-10 真空保存容器セット","topic_no":9,"topic":"ステンレス 保存容器・ボウル・タンブラー","code":"K-10","sku":"電動 真空保存容器セット","price":4980,"b1":[30,20,15],"b2":null,"box":"30×20×15","ship_yen":699,"cbm":0.009,"memo":"","rk_shop":"VAKUEN（公式）","rk_price":"2,780円〜","rk_reviews":6050,"rk_url":"https://item.rakuten.co.jp/kitchenavi/2498-001010/","rk_note":"セット 10,780円〜（1,830件）"},{"key":"N-2 ステンレス防臭ワン","topic_no":9,"topic":"ステンレス 保存容器・ボウル・タンブラー","code":"N-2","sku":"ステンレス 排水口 防臭ワン","price":1999,"b1":[12,12,9],"b2":null,"box":"12×12×9","ship_yen":624,"cbm":0.0013,"memo":"サイズ絶対変えない・食品検査不要","rk_shop":"finelifestyle","rk_price":"2,158円","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/finelifestyle/ncc0206/","rk_note":"Nint 月500万／通販奉行 2,198円"},{"key":"K-1 オイルスプレー","topic_no":10,"topic":"ガラス製品（tesione）","code":"K-1","sku":"ワンプッシュ オイルスプレー","price":1980,"b1":[8,8,22],"b2":null,"box":"8×8×22","ship_yen":624,"cbm":0.0014,"memo":"","rk_shop":"ヒトメボレ（楽天1位）","rk_price":"2,000円","rk_reviews":6298,"rk_url":"https://item.rakuten.co.jp/harezoratbp/pc205-2/","rk_note":""},{"key":"K-8 耐熱ガラスボウル 3個セット","topic_no":10,"topic":"ガラス製品（tesione）","code":"K-8","sku":"レンジOK 耐熱ガラスボウル 3個","price":2980,"b1":[23,23,16],"b2":null,"box":"23×23×16","ship_yen":699,"cbm":0.0085,"memo":"","rk_shop":"HARIO（motteplus）","rk_price":"3,278円","rk_reviews":409,"rk_url":"https://item.rakuten.co.jp/motteplus/20741319/","rk_note":""},{"key":"K-5 伸縮レンジガード","topic_no":11,"topic":"スチール キッチン収納（tesione）","code":"K-5","sku":"伸縮 レンジガード（油はね防止）","price":3980,"b1":[52,38,8],"b2":null,"box":"52×38×8","ship_yen":794,"cbm":0.0158,"memo":"","rk_shop":"リビングート","rk_price":"2,980円〜","rk_reviews":777,"rk_url":"https://item.rakuten.co.jp/livingut/395558/","rk_note":"tower 8,910円（429件）"},{"key":"N-1 伸縮水切りラック 57cm","topic_no":11,"topic":"スチール キッチン収納（tesione）","code":"N-1","sku":"伸縮 水切りラック 奥行57cm","price":5480,"b1":[60,22,12],"b2":null,"box":"60×22×12","ship_yen":794,"cbm":0.0158,"memo":"奥行57cmは絶対変えない","rk_shop":"Easyjoy","rk_price":"5,480円","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/easyjoy-shop/mizukiriraku-1/","rk_note":"Nint 月980万"},{"key":"N-4 隠せるスリム収納ラック 1個","topic_no":11,"topic":"スチール キッチン収納（tesione）","code":"N-4","sku":"隠せるスリム収納 フラップ扉","price":4599,"b1":[63,16,18],"b2":null,"box":"63×16×18","ship_yen":794,"cbm":0.0181,"memo":"","rk_shop":"今日の家（韓国）","rk_price":"—","rk_reviews":0,"rk_url":"https://store.ohou.se/goods/4151076","rk_note":"歴代キッチンランキング上位"},{"key":"N-4 隠せるスリム収納ラック 2個セット","topic_no":11,"topic":"スチール キッチン収納（tesione）","code":"N-4","sku":"隠せるスリム収納 2個セット","price":8999,"b1":[63,32,18],"b2":null,"box":"63×32×18","ship_yen":863,"cbm":0.0363,"memo":"2個1梱包で推定","rk_shop":"今日の家（韓国）","rk_price":"—","rk_reviews":0,"rk_url":"","rk_note":"歴代キッチンランキング上位"},{"key":"N-5 半透明扉 収納ラック M","topic_no":11,"topic":"スチール キッチン収納（tesione）","code":"N-5","sku":"韓国風 半透明扉ラック M","price":3599,"b1":[31,18,21],"b2":null,"box":"31×18×21","ship_yen":699,"cbm":0.0117,"memo":"","rk_shop":"今日の家（韓国）","rk_price":"—","rk_reviews":0,"rk_url":"https://store.ohou.se/goods/3455132","rk_note":""},{"key":"N-5 半透明扉 収納ラック L","topic_no":11,"topic":"スチール キッチン収納（tesione）","code":"N-5","sku":"韓国風 半透明扉ラック L","price":3999,"b1":[46,25,25],"b2":null,"box":"46×25×25","ship_yen":794,"cbm":0.0288,"memo":"","rk_shop":"今日の家（韓国）","rk_price":"—","rk_reviews":0,"rk_url":"","rk_note":""},{"key":"N-6 伸縮コの字ラック 奥行14","topic_no":11,"topic":"スチール キッチン収納（tesione）","code":"N-6","sku":"伸縮コの字ラック 奥行14","price":3480,"b1":[35,17,17],"b2":null,"box":"35×17×17","ship_yen":699,"cbm":0.0101,"memo":"","rk_shop":"エアリゾーム","rk_price":"3,490円","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/cocoterior/c-air-kc-12-140/","rk_note":"月20万"},{"key":"N-6 伸縮コの字ラック 奥行22","topic_no":11,"topic":"スチール キッチン収納（tesione）","code":"N-6","sku":"伸縮コの字ラック 奥行22","price":3980,"b1":[35,25,17],"b2":null,"box":"35×25×17","ship_yen":699,"cbm":0.0149,"memo":"","rk_shop":"エアリゾーム","rk_price":"3,999円","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/cocoterior/c-air-kc-12-220/","rk_note":"月30万"},{"key":"K-6 珪藻土 歯ブラシスタンド 3点","topic_no":12,"topic":"珪藻土・セラミック雑貨","code":"K-6","sku":"珪藻土 歯ブラシスタンド 3点","price":2480,"b1":[25,15,12],"b2":null,"box":"25×15×12","ship_yen":624,"cbm":0.0045,"memo":"","rk_shop":"soil（珪藻土）","rk_price":"2,420円（コースター）","rk_reviews":592,"rk_url":"https://item.rakuten.co.jp/actplus/jis-420/","rk_note":"珪藻土歯ブラシスタンド（整理収納プロ監修）1,680円（100件）"},{"key":"N-7 レザー×布 チェア2脚 固定脚","topic_no":13,"topic":"ダイニングチェア（スチール脚・メッキ）","code":"N-7","sku":"レザー×布 チェア2脚（固定脚）","price":13980,"b1":[68,47,54],"b2":null,"box":"68×47×54","ship_yen":1852,"cbm":0.1726,"memo":"梱包は企画書記載（180サイズ以内）・座面高43cm厳守","rk_shop":"ミラショー","rk_price":"14,280円（2脚）","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/mr-kagu/ra-dn-030/","rk_note":"月50万／エアリゾーム 固定14,999円・回転19,490円（月140万）"},{"key":"N-7 レザー×布 チェア2脚 回転脚","topic_no":13,"topic":"ダイニングチェア（スチール脚・メッキ）","code":"N-7","sku":"レザー×布 チェア2脚（回転脚）","price":17980,"b1":[70,50,56],"b2":null,"box":"70×50×56","ship_yen":1854,"cbm":0.196,"memo":"上海展示会で回転2脚$40の実績","rk_shop":"エアリゾーム","rk_price":"19,490円（回転2脚）","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/air-rhizome/air-sr-sw22-a/","rk_note":"月140万"},{"key":"N-8 肘付き レザー×布 チェア2脚 固定脚","topic_no":13,"topic":"ダイニングチェア（スチール脚・メッキ）","code":"N-8","sku":"肘付き レザー×布 チェア2脚（固定）","price":14980,"b1":[72,50,56],"b2":null,"box":"72×50×56","ship_yen":1854,"cbm":0.2016,"memo":"座面高43cm厳守","rk_shop":"ミラショー","rk_price":"14,280円（2脚・肘なし）","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/mr-kagu/ra-dn-030/","rk_note":""},{"key":"N-8 肘付き レザー×布 チェア2脚 回転脚","topic_no":13,"topic":"ダイニングチェア（スチール脚・メッキ）","code":"N-8","sku":"肘付き レザー×布 チェア2脚（回転）","price":18980,"b1":[74,52,58],"b2":null,"box":"74×52×58","ship_yen":2423,"cbm":0.2232,"memo":"","rk_shop":"エアリゾーム","rk_price":"19,490円（回転2脚・肘なし）","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/air-rhizome/air-sr-sw22-a/","rk_note":""},{"key":"N-9 ジャパンディ チェア2脚","topic_no":13,"topic":"ダイニングチェア（スチール脚・メッキ）","code":"N-9","sku":"ジャパンディ 木目脚チェア2脚","price":19800,"b1":[67,61,43],"b2":null,"box":"67×61×43","ship_yen":1854,"cbm":0.1757,"memo":"梱包は企画書記載（2脚1梱包）","rk_shop":"LOWYA","rk_price":"25,000円（2脚）","rk_reviews":0,"rk_url":"https://www.low-ya.com/goods/DQVQS","rk_note":""},{"key":"N-10 ジャパンディ ゆったりチェア2脚","topic_no":13,"topic":"ダイニングチェア（スチール脚・メッキ）","code":"N-10","sku":"ジャパンディ ゆったりチェア2脚","price":21800,"b1":[67,61,43],"b2":null,"box":"67×61×43","ship_yen":1854,"cbm":0.1757,"memo":"売価は要相談→仮","rk_shop":"LOWYA","rk_price":"25,000円（2脚）","rk_reviews":0,"rk_url":"","rk_note":"売価は企画書で要相談"},{"key":"N-11 ジャパンディ 肘付きチェア","topic_no":13,"topic":"ダイニングチェア（スチール脚・メッキ）","code":"N-11","sku":"ジャパンディ 肘付きチェア","price":9999,"b1":[60,55,35],"b2":null,"box":"60×55×35","ship_yen":1189,"cbm":0.1155,"memo":"","rk_shop":"リコメン堂","rk_price":"8,999円","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/rcmdin/b8-xp-kc-01/","rk_note":""},{"key":"N-12 ジャパンディ ペーパーコード チェア2脚","topic_no":13,"topic":"ダイニングチェア（スチール脚・メッキ）","code":"N-12","sku":"ジャパンディ ペーパーコード2脚","price":15800,"b1":[58,55,45],"b2":null,"box":"58×55×45","ship_yen":1189,"cbm":0.1436,"memo":"売価は未記入→仮","rk_shop":"（参考なし）","rk_price":"—","rk_reviews":0,"rk_url":"","rk_note":"売価は企画書で未記入"},{"key":"N-13 セブンチェア風 突板 2脚","topic_no":13,"topic":"ダイニングチェア（スチール脚・メッキ）","code":"N-13","sku":"セブンチェア風 木×メッキ 2脚","price":8980,"b1":[52,50,35],"b2":null,"box":"52×50×35","ship_yen":863,"cbm":0.091,"memo":"KD梱包で推定","rk_shop":"マックスシェア","rk_price":"9,020円","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/maxshare/a08493/","rk_note":"シリーズ月50万"},{"key":"N-14 セブンチェア風 樹脂座面 2脚","topic_no":13,"topic":"ダイニングチェア（スチール脚・メッキ）","code":"N-14","sku":"セブンチェア風 樹脂 2脚","price":7980,"b1":[52,50,35],"b2":null,"box":"52×50×35","ship_yen":863,"cbm":0.091,"memo":"KD梱包で推定","rk_shop":"リコメン堂","rk_price":"9,980円","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/rcmdin/go-cc-ari2/","rk_note":"シリーズ月15万"},{"key":"N-15 ステンレス ローテーブル","topic_no":14,"topic":"ステンレス家具・小物","code":"N-15","sku":"ステンレス ミニテーブル","price":13800,"b1":[36,36,46],"b2":null,"box":"36×36×46","ship_yen":863,"cbm":0.0596,"memo":"四角・六角・円柱","rk_shop":"緑葉風","rk_price":"14,380円","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/gadgetmart/cn25068/","rk_note":"月60万"},{"key":"N-16 ステンレス ワイヤーシェルフ","topic_no":14,"topic":"ステンレス家具・小物","code":"N-16","sku":"ステンレス ワイヤーシェルフ","price":9980,"b1":[40,40,40],"b2":null,"box":"40×40×40","ship_yen":863,"cbm":0.064,"memo":"","rk_shop":"緑葉風","rk_price":"5,800円","rk_reviews":0,"rk_url":"https://item.rakuten.co.jp/gadgetmart/cn25078/","rk_note":"月25万"}];
+const FEE=[[0, 624], [60.01, 699], [80.01, 794], [100.01, 863], [140.01, 1189], [160.01, 1852], [170.01, 1854], [180.01, 2423], [200.01, 3142], [220.01, 4002], [240.01, 5163], [260.01, 6500], [280.01, 8000], [300.01, 10000]];
+const RATE=170,DUTY=400000,HQ=68,GO=0.35,MAXQ=0.25,ROY=0.08,SK='fair-ov-v1';
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+const usdf=n=>'$'+n.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
+const fee=s=>{let f=0;for(const [lo,v] of FEE){if(s>=lo)f=v}return f};
+let OV={};try{OV=JSON.parse(localStorage.getItem(SK)||'{}')||{}}catch(e){OV={}}
+const persist=()=>{try{localStorage.setItem(SK,JSON.stringify(OV))}catch(e){}};
+// effective spec for a row
+function spec(r){
+ const o=OV[r.key]||{};
+ const b1=o.b1||r.b1, b2=o.b1?(o.b2||null):r.b2, pcs=o.pcs||1;
+ const vol=b=>b?b[0]*b[1]*b[2]/1e6:0, sum=b=>b?b[0]+b[1]+b[2]:0;
+ const autoShip=fee(sum(b1))+(b2?fee(sum(b2)):0);
+ const ship=o.ship!=null?o.ship:(o.b1?autoShip:r.ship_yen);
+ const cbm=o.b1?(vol(b1)+vol(b2))/pcs:r.cbm;
+ const price=o.price||r.price;
+ return {b1,b2,pcs,ship,cbm,price,changed:!!OV[r.key]};
+}
+const lineAt=(price,ship,cbm,q)=>Math.floor((((1-q)*price/1.1-ship-DUTY*cbm/HQ)/RATE)*10)/10;
+let topic='all';
+const sel=$('sel');
+const topics=[...new Map(ROWS.map(r=>[r.topic_no,r.topic])).entries()];
+topics.forEach(([n,t])=>{const og=document.createElement('optgroup');og.label=n+'. '+t;ROWS.filter(r=>r.topic_no===n).forEach(r=>og.append(new Option(r.sku+'（'+r.code+'）',r.key)));sel.append(og)});
+$('take').textContent=topics.length+'トピック・'+ROWS.length+'SKU。工場の見積が緑の$以下なら即決、オレンジまでなら交渉。';
+const cur=()=>ROWS.find(x=>x.key===sel.value);
+const num=id=>{const v=parseFloat($(id).value);return v>0?v:null};
+function fillForm(){
+ const r=cur(),s=spec(r),o=OV[r.key]||{};
+ $('price').value=s.price;
+ [['b1w',0],['b1d',1],['b1h',2]].forEach(([id,i])=>$(id).value=s.b1[i]);
+ [['b2w',0],['b2d',1],['b2h',2]].forEach(([id,i])=>$(id).value=s.b2?s.b2[i]:'');
+ $('shipov').value=o.ship!=null?o.ship:'';$('pcs').value=o.pcs||'';
+ $('saved').textContent=s.changed?'このスマホに保存済みの値を表示中':'';
+ const rk=$('rk');rk.replaceChildren();
+ const h=document.createElement('div');h.innerHTML='<b>楽天 売れ筋（参考）</b>';
+ const t=document.createElement('div');t.textContent=r.rk_shop+'：'+r.rk_price+(r.rk_reviews?'（レビュー'+r.rk_reviews.toLocaleString()+'件）':'');
+ rk.append(h,t);
+ if(r.rk_note){const n=document.createElement('div');n.className='note';n.style.margin='4px 0 0';n.textContent=r.rk_note;rk.append(n)}
+ if(r.rk_url){const a=document.createElement('a');a.href=r.rk_url;a.target='_blank';a.rel='noopener';a.textContent=r.rk_url;rk.append(a)}
+}
+// live (unsaved) spec from form
+function formSpec(){
+ const r=cur();
+ const b1=[num('b1w'),num('b1d'),num('b1h')], b2=[num('b2w'),num('b2d'),num('b2h')];
+ const okb1=b1.every(v=>v), okb2=b2.every(v=>v);
+ const vol=b=>b[0]*b[1]*b[2]/1e6, sum=b=>b[0]+b[1]+b[2];
+ const pcs=num('pcs')||1;
+ const B1=okb1?b1:r.b1, B2=okb2?b2:null;
+ const autoShip=fee(sum(B1))+(B2?fee(sum(B2)):0);
+ const shipOv=$('shipov').value!==''&&parseFloat($('shipov').value)>=0?parseFloat($('shipov').value):null;
+ return {b1:B1,b2:B2,pcs,ship:shipOv!=null?shipOv:autoShip,shipOv,cbm:(vol(B1)+(B2?vol(B2):0))/pcs,price:num('price')||r.price,autoShip};
+}
+function update(){
+ const r=cur();if(!r)return;
+ const s=formSpec(),duty=DUTY*s.cbm/HQ;
+ $('line').textContent=usdf(lineAt(s.price,s.ship,s.cbm,GO))+' ／ '+usdf(lineAt(s.price,s.ship,s.cbm,MAXQ));
+ const box=s.b1.join('×')+(s.b2?' ＋ '+s.b2.join('×'):'');
+ $('detail').textContent='売価 '+yen(s.price)+'・送料 '+yen(s.ship)+(s.shipOv!=null?'（直接入力）':'（'+(s.b1[0]+s.b1[1]+s.b1[2])+(s.b2?'/'+(s.b2[0]+s.b2[1]+s.b2[2]):'')+'サイズ）')+'・梱包 '+box+(s.pcs>1?'（'+s.pcs+'個入）':'')+'・CBM '+s.cbm.toFixed(3)+'・諸掛 '+yen(duty)+'/個・40HQ 約'+Math.floor(HQ/s.cbm).toLocaleString()+'個'+(r.memo?'｜'+r.memo:'');
+ const v=parseFloat($('usd').value),vd=$('verdict');
+ if($('usd').value===''||!(v>=0)){vd.textContent='見積を入力';vd.className='v';$('gm').textContent='—';$('pf').textContent='—';return}
+ const cost=v*RATE+duty,gm=1-((s.ship+cost)*1.1)/s.price,pf=s.price/1.1-s.ship-cost-s.price*ROY;
+ $('gm').textContent=(gm*100).toFixed(1)+'%';$('pf').textContent=yen(pf);
+ if(gm>=GO){vd.textContent='即決';vd.className='v v-go'}else if(gm>=MAXQ){vd.textContent='交渉';vd.className='v v-mid'}else{vd.textContent='見送り';vd.className='v v-no'}
+}
+function exportText(){
+ const lines=Object.entries(OV).map(([k,o])=>{const r=ROWS.find(x=>x.key===k);if(!r)return '';const s=spec(r);
+  return r.sku+'（'+r.code+'）｜売価 '+s.price+'円｜箱1 '+s.b1.join('×')+(s.b2?'｜箱2 '+s.b2.join('×'):'')+(s.pcs>1?'｜入数 '+s.pcs:'')+'｜送料 '+s.ship+'円'+(o.ship!=null?'（直接）':'')+'｜CBM '+s.cbm.toFixed(4)+'｜即決 '+usdf(lineAt(s.price,s.ship,s.cbm,GO))+'／上限 '+usdf(lineAt(s.price,s.ship,s.cbm,MAXQ))}).filter(Boolean);
+ $('exp').value=lines.length?lines.join('\n'):'（まだ更新はありません）';
+}
+function draw(){
+ const ch=$('chips');ch.replaceChildren(...[['all','すべて'],...topics.map(([n,t])=>[String(n),n+'. '+t])].map(([t,l])=>{const b=document.createElement('button');b.type='button';b.dataset.t=t;b.textContent=l;b.setAttribute('aria-pressed',String(t===topic));return b}));
+ const term=$('q').value.trim().toLowerCase();const out=[];let last=null;
+ ROWS.filter(r=>(topic==='all'||String(r.topic_no)===topic)&&(!term||(r.key+r.topic+(r.memo||'')+r.rk_shop).toLowerCase().includes(term))).forEach(r=>{
+  if(r.topic_no!==last){last=r.topic_no;const tr=document.createElement('tr');tr.className='tp';const td=document.createElement('td');td.colSpan=6;td.textContent=r.topic_no+'. '+r.topic;tr.append(td);out.push(tr)}
+  const s=spec(r);const tr=document.createElement('tr');tr.dataset.key=r.key;if(s.changed)tr.className='chg';
+  const td=(c,...k)=>{const e=document.createElement('td');if(c)e.className=c;e.append(...k);return e};
+  const nm=document.createElement('div');nm.className='sku';const b=document.createElement('b');b.textContent=r.sku;if(s.changed){const bd=document.createElement('span');bd.className='badge';bd.textContent='更新';b.append(bd)}const sm=document.createElement('small');sm.textContent=r.code;nm.append(b,sm);
+  const g=document.createElement('span');g.className='go';g.textContent=usdf(lineAt(s.price,s.ship,s.cbm,GO));
+  const m=document.createElement('span');m.className='mid';m.textContent=usdf(lineAt(s.price,s.ship,s.cbm,MAXQ));
+  const rk=document.createElement('small');rk.textContent=r.rk_shop+' '+r.rk_price;
+  tr.append(td('',nm),td('num',yen(s.price)),td('num',g),td('num',m),td('num hide',yen(s.ship)),td('hide',rk));out.push(tr)});
+ $('body').replaceChildren(...out);exportText();
+}
+['usd','price','b1w','b1d','b1h','b2w','b2d','b2h','shipov','pcs'].forEach(id=>$(id).addEventListener('input',update));
+sel.addEventListener('change',()=>{fillForm();update()});
+$('save').addEventListener('click',()=>{const r=cur(),s=formSpec(),o={};
+ o.b1=s.b1;if(s.b2)o.b2=s.b2;if(s.pcs>1)o.pcs=s.pcs;if(s.shipOv!=null)o.ship=s.shipOv;if(s.price!==r.price)o.price=s.price;
+ OV[r.key]=o;persist();draw();$('saved').textContent='保存しました';});
+$('reset').addEventListener('click',()=>{delete OV[cur().key];persist();fillForm();update();draw();$('saved').textContent='元に戻しました'});
+$('resetall').addEventListener('click',()=>{if($('resetall').dataset.armed){OV={};persist();fillForm();update();draw();$('resetall').textContent='すべて元に戻す';delete $('resetall').dataset.armed;$('copied').textContent='すべて元に戻しました'}else{$('resetall').dataset.armed='1';$('resetall').textContent='もう一度押すと全部戻します'}});
+$('copy').addEventListener('click',async()=>{const t=$('exp');try{await navigator.clipboard.writeText(t.value);$('copied').textContent='コピーしました'}catch(e){t.focus();t.select();$('copied').textContent='選択しました。長押しでコピーしてください'}});
+$('q').addEventListener('input',draw);
+$('chips').addEventListener('click',e=>{const b=e.target.closest('button');if(b){topic=b.dataset.t;draw()}});
+$('body').addEventListener('click',e=>{const tr=e.target.closest('tr[data-key]');if(!tr)return;sel.value=tr.dataset.key;fillForm();update();$('calc').scrollIntoView({behavior:'smooth'});$('usd').focus({preventScroll:true})});
+fillForm();draw();update();
+
+// ===== 見積メモ帳 =====
+const MK='fair-memo-v1';
+let MEMOS=[];
+// 保存先：IndexedDB（大容量）。使えない環境では localStorage（約5MB）
+const DB={db:null,ok:false};
+const byNew=(a,b)=>b.id-a.id;
+const idbOpen=()=>new Promise(res=>{try{const r=indexedDB.open('fair-checker',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('memos'))r.result.createObjectStore('memos',{keyPath:'id'})};r.onsuccess=()=>{DB.db=r.result;DB.ok=true;res(true)};r.onerror=()=>res(false);r.onblocked=()=>res(false)}catch(e){res(false)}});
+const saveMemos=()=>{
+ if(DB.ok)return new Promise(res=>{try{const tx=DB.db.transaction('memos','readwrite');const st=tx.objectStore('memos');st.clear();MEMOS.forEach(m=>st.put(m));tx.oncomplete=()=>{res(true);showCap()};tx.onerror=()=>res(false);tx.onabort=()=>res(false)}catch(e){res(false)}});
+ try{localStorage.setItem(MK,JSON.stringify(MEMOS));showCap();return Promise.resolve(true)}catch(e){return Promise.resolve(false)}
+};
+const mb=n=>(n/1048576).toFixed(n<10485760?1:0)+'MB';
+async function showCap(){
+ const el=$('m-cap');if(!el)return;
+ const size=new Blob([JSON.stringify(MEMOS)]).size, per=MEMOS.length?size/MEMOS.length:0;
+ let t=DB.ok?'保存先：大容量（スマホ内のデータベース）':'保存先：小容量（約5MB）';
+ if(DB.ok&&navigator.storage&&navigator.storage.estimate){try{const e=await navigator.storage.estimate();const free=Math.max(0,(e.quota||0)-(e.usage||0));const unit=Math.max(per,300*1024);t+='・メモ '+mb(size)+' 使用・空き 約'+mb(free)+'（写真付きであと約'+Math.floor(free/unit).toLocaleString()+'件）'}catch(e){t+='・メモ '+mb(size)+' 使用'}}
+ else if(!DB.ok){const left=Math.max(0,5*1048576-size*2);t+='・あと約'+mb(left)+'（写真付きなら約'+Math.floor(left/(300*1024))+'件）'}
+ el.textContent=t;
+}
+async function loadMemos(){
+ await idbOpen();
+ let ls=[];try{ls=JSON.parse(localStorage.getItem(MK)||'[]')||[]}catch(e){ls=[]}
+ if(DB.ok){
+  const all=await new Promise(res=>{try{const r=DB.db.transaction('memos').objectStore('memos').getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>res([])}catch(e){res([])}});
+  if(ls.length){const ids=new Set(all.map(m=>m.id));ls.forEach(m=>{if(!ids.has(m.id))all.push(m)});MEMOS=all.sort(byNew);if(await saveMemos()){try{localStorage.removeItem(MK)}catch(e){}}}
+  else MEMOS=all.sort(byNew);
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+ }else MEMOS=ls;
+ drawMemos();showCap();
+}
+let PH=[];let FPH=null;let mfilter='all';
+const shrink=f=>new Promise(res=>{const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,640/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.6))};im.onerror=()=>res(null);im.src=rd.result};rd.onerror=()=>res(null);rd.readAsDataURL(f)});
+$('m-photo').addEventListener('change',async e=>{PH=[];for(const f of [...e.target.files].slice(0,3)){const d=await shrink(f);if(d)PH.push(d)}$('m-prev').replaceChildren(...PH.map(d=>{const i=document.createElement('img');i.src=d;i.alt='写真';return i}))});
+$('m-fphoto').addEventListener('change',async e=>{const f=e.target.files[0];FPH=f?await shrink(f):null;$('m-fprev').replaceChildren(...(FPH?[Object.assign(document.createElement('img'),{src:FPH,alt:'工場名'})]:[]))});
+const v=id=>$(id).value.trim();
+$('m-add').addEventListener('click',async()=>{
+ const r=cur(),s=formSpec(),usdv=parseFloat($('usd').value);
+ if(!(usdv>=0)){$('m-msg').textContent='先に工場の見積（$）を入れてください';return}
+ const duty=DUTY*s.cbm/HQ,cost=usdv*RATE+duty,gm=1-((s.ship+cost)*1.1)/s.price,pf=s.price/1.1-s.ship-cost-s.price*ROY;
+ const verdict=gm>=GO?'即決':gm>=MAXQ?'交渉':'見送り';
+ const d=new Date();
+ MEMOS.unshift({id:Date.now(),at:d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'),
+  key:r.key,code:r.code,name:r.sku,topic:r.topic_no+'. '+r.topic,usd:usdv,price:s.price,ship:s.ship,cbm:+s.cbm.toFixed(4),box:s.b1.join('×')+(s.b2?' ＋ '+s.b2.join('×'):'')+(s.pcs>1?'（'+s.pcs+'個入）':''),
+  gm:+(gm*100).toFixed(1),profit:Math.round(pf),verdict,go:lineAt(s.price,s.ship,s.cbm,GO),max:lineAt(s.price,s.ship,s.cbm,MAXQ),
+  fac:v('m-fac'),booth:v('m-booth'),moq:v('m-moq'),port:v('m-port'),country:v('m-country'),note:v('m-note'),photos:PH.slice(),fphoto:FPH});
+ if(!(await saveMemos())){MEMOS[0].photos=[];MEMOS[0].fphoto=null;const ok=await saveMemos();$('m-msg').textContent=ok?'容量がいっぱいのため写真なしで保存しました':'保存できませんでした（容量がいっぱい）';}else{$('m-msg').textContent='メモに追加しました（'+MEMOS.length+'件）'}
+ ['m-fac','m-booth','m-moq','m-port','m-country','m-note'].forEach(id=>$(id).value='');$('m-photo').value='';PH=[];$('m-prev').replaceChildren();$('m-fphoto').value='';FPH=null;$('m-fprev').replaceChildren();
+ drawMemos();
+});
+const pillCls={即決:'p-go',交渉:'p-mid',見送り:'p-no'};
+function memoText(m){return ['【'+m.verdict+'】'+m.name+'（'+m.code+'）',
+ '日時：'+m.at,'工場：'+(m.fac||'—')+(m.booth?'／ブース '+m.booth:'')+(m.contact?'／'+m.contact:''),
+ '見積：$'+m.usd+'（即決 $'+m.go+'／上限 $'+m.max+'）','粗利率：'+m.gm+'%／利益 ¥'+m.profit.toLocaleString()+'/個','売価：¥'+m.price.toLocaleString()+'／送料：¥'+m.ship.toLocaleString()+'／梱包：'+m.box+'／CBM：'+m.cbm,
+ (m.moq?'MOQ：'+m.moq+'　':'')+(m.port?'FOB港：'+m.port+'　':'')+(m.lead?'納期：'+m.lead+'　':'')+(m.country?'生産：'+m.country:''),m.note?'メモ：'+m.note:''].filter(x=>x.trim()).join('\n')}
+function drawMemos(){
+ const cnt={即決:0,交渉:0,見送り:0};MEMOS.forEach(m=>cnt[m.verdict]++);
+ $('m-sum').textContent=MEMOS.length?('全'+MEMOS.length+'件（即決 '+cnt['即決']+'・交渉 '+cnt['交渉']+'・見送り '+cnt['見送り']+'）。新しい順。'):'まだメモはありません。上の見積チェックで「メモに追加」を押すとここに並びます。';
+ $('m-filter').replaceChildren(...[['all','すべて'],['即決','即決'],['交渉','交渉'],['見送り','見送り']].map(([k,l])=>{const b=document.createElement('button');b.type='button';b.dataset.f=k;b.textContent=l+(k==='all'?'':'（'+cnt[k]+'）');b.setAttribute('aria-pressed',String(k===mfilter));return b}));
+ const list=MEMOS.filter(m=>mfilter==='all'||m.verdict===mfilter);
+ $('memos').replaceChildren(...list.map(m=>{
+  const box=document.createElement('article');box.className='memo';
+  const hd=document.createElement('div');hd.className='memo-head';
+  const t=document.createElement('div');const b=document.createElement('b');b.textContent=m.name;const sm=document.createElement('div');sm.className='note';sm.style.margin='0';sm.textContent=m.code+'・'+m.at;t.append(b,sm);
+  const pl=document.createElement('span');pl.className='pill '+(pillCls[m.verdict]||'p-na');pl.textContent=m.verdict;hd.append(t,pl);
+  const kv=document.createElement('div');kv.className='kv';
+  [['工場',(m.fac||'—')+(m.booth?'（'+m.booth+'）':'')],['連絡先',m.contact],['見積','$'+m.usd+'（即決 $'+m.go+'／上限 $'+m.max+'）'],['粗利・利益',m.gm+'%・¥'+m.profit.toLocaleString()+'/個'],['売価・送料','¥'+m.price.toLocaleString()+'・¥'+m.ship.toLocaleString()],['梱包・CBM',m.box+'・'+m.cbm],['MOQ',m.moq],['FOB港',m.port],['納期',m.lead],['生産',m.country]].filter(([,x])=>x).forEach(([k,x])=>{const d=document.createElement('div');const s=document.createElement('span');s.textContent=k+'　';d.append(s,document.createTextNode(x));kv.append(d)});
+  box.append(hd,kv);
+  if(m.note){const n=document.createElement('div');n.style.fontSize='13px';n.style.whiteSpace='pre-wrap';n.textContent=m.note;box.append(n)}
+  const allp=[...(m.fphoto?[m.fphoto]:[]),...(m.photos||[])];if(allp.length){const ph=document.createElement('div');ph.className='photos';ph.append(...allp.map((d,ix)=>{const i=document.createElement('img');i.src=d;i.alt=(m.fphoto&&ix===0)?'工場名':m.name;if(m.fphoto&&ix===0)i.style.outline='2px solid var(--acc)';return i}));box.append(ph)}
+  const ac=document.createElement('div');ac.className='acts';
+  const c1=document.createElement('button');c1.className='btn';c1.type='button';c1.textContent='この1件をコピー';c1.dataset.copy=m.id;
+  const c2=document.createElement('button');c2.className='btn';c2.type='button';c2.textContent='削除';c2.dataset.del=m.id;
+  ac.append(c1,c2);box.append(ac);return box}));
+}
+$('m-filter').addEventListener('click',e=>{const b=e.target.closest('button');if(b){mfilter=b.dataset.f;drawMemos()}});
+const copyText=async(txt,msgEl)=>{try{await navigator.clipboard.writeText(txt);msgEl.textContent='コピーしました'}catch(e){const ta=$('m-text');ta.hidden=false;ta.value=txt;ta.focus();ta.select();msgEl.textContent='下の文字を長押ししてコピーしてください'}};
+$('memos').addEventListener('click',e=>{
+ const c=e.target.closest('[data-copy]');if(c){const m=MEMOS.find(x=>String(x.id)===c.dataset.copy);if(m)copyText(memoText(m),$('m-out'));return}
+ const d=e.target.closest('[data-del]');if(d){if(d.dataset.armed){MEMOS=MEMOS.filter(x=>String(x.id)!==d.dataset.del);saveMemos();drawMemos()}else{d.dataset.armed='1';d.textContent='もう一度押すと削除'}}
+});
+$('m-copy').addEventListener('click',()=>{if(!MEMOS.length){$('m-out').textContent='メモがありません';return}copyText(MEMOS.map(memoText).join('\n\n―――――\n\n'),$('m-out'))});
+$('m-csv').addEventListener('click',()=>{
+ if(!MEMOS.length){$('m-out').textContent='メモがありません';return}
+ const H=['日時','判定','No','商品','トピック','工場','ブース','連絡先','見積$','即決$','上限$','粗利率%','利益/個','売価','送料','梱包','CBM','MOQ','FOB港','生産','メモ'];
+ const q=x=>'"'+String(x??'').replace(/"/g,'""')+'"';
+ const rows=MEMOS.map(m=>[m.at,m.verdict,m.code,m.name,m.topic,m.fac,m.booth,m.contact,m.usd,m.go,m.max,m.gm,m.profit,m.price,m.ship,m.box,m.cbm,m.moq,m.port||m.lead,m.country,m.note].map(q).join(','));
+ const csv='﻿'+[H.join(','),...rows].join('\r\n');
+ (async()=>{try{const how=await saveFile('fair_memo_'+new Date().toISOString().slice(0,10)+'.csv',csv,'text/csv');$('m-out').textContent=how==='cancel'?'キャンセルしました':'CSVを保存しました'}catch(e){copyText(csv,$('m-out'))}})();
+});
+loadMemos();
+
+// ===== バックアップ =====
+const BK='fair-backup-at';
+const showLast=()=>{let t='';try{t=localStorage.getItem(BK)||''}catch(e){}$('bk-last').textContent=t?('前回のバックアップ：'+t):'まだバックアップしていません'};
+const saveFile=async(name,text,type)=>{
+ const file=new File([text],name,{type});
+ try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return 'share'}}catch(e){if(e&&e.name==='AbortError')return 'cancel'}
+ const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.append(a);a.click();a.remove();return 'download'};
+$('bk-save').addEventListener('click',async()=>{
+ const d=new Date(),stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
+ const data=JSON.stringify({app:'fair-checker',v:1,saved:d.toISOString(),memos:MEMOS,overrides:OV});
+ try{const how=await saveFile('fair_memo_backup_'+stamp+'.json',data,'application/json');if(how==='cancel'){$('bk-msg').textContent='キャンセルしました';return}
+  const t=d.getMonth()+1+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+'（'+MEMOS.length+'件）';try{localStorage.setItem(BK,t)}catch(e){}showLast();
+  $('bk-msg').textContent=how==='share'?'送り先を選んで保存しました':'保存しました。ダウンロード（ファイル）を確認して、WeChat等で自分に送ってください'}catch(e){$('bk-msg').textContent='保存できませんでした'}
+});
+$('bk-load').addEventListener('change',e=>{
+ const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+ rd.onload=async()=>{try{const j=JSON.parse(rd.result);if(j.app!=='fair-checker')throw 0;
+  const ids=new Set(MEMOS.map(m=>m.id));let add=0;(j.memos||[]).forEach(m=>{if(!ids.has(m.id)){MEMOS.push(m);add++}});
+  MEMOS.sort((a,b)=>b.id-a.id);Object.assign(OV,j.overrides||{});
+  const ok=await saveMemos();persist();drawMemos();draw();fillForm();update();
+  $('bk-msg').textContent=ok?('読み込みました（メモ '+add+'件追加・重複は除外）'):'読み込みましたが容量がいっぱいで保存できませんでした';
+ }catch(err){$('bk-msg').textContent='このファイルは読み込めません（バックアップのファイルを選んでください）'}e.target.value=''};
+ rd.readAsText(f);
+});
+showLast();
+
+// ===== 写真つきレポート =====
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('m-rep').addEventListener('click',async()=>{
+ if(!MEMOS.length){$('m-out').textContent='メモがありません';return}
+ const d=new Date(),stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
+ const cnt={即決:0,交渉:0,見送り:0};MEMOS.forEach(m=>cnt[m.verdict]++);
+ const col={即決:'#1f7a45',交渉:'#b26a00',見送り:'#c0392b'};
+ const order={即決:0,交渉:1,見送り:2};
+ const list=MEMOS.slice().sort((a,b)=>(order[a.verdict]-order[b.verdict])||(a.code<b.code?-1:a.code>b.code?1:b.id-a.id));
+ const row=(k,v)=>v?`<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`:'';
+ const cards=list.map(m=>`<article><header><div><h2>${esc(m.name)}</h2><p>${esc(m.code)}・${esc(m.topic)}・${esc(m.at)}</p></div><span class="pill" style="background:${col[m.verdict]||'#777'}">${esc(m.verdict)}</span></header>
+<div class="body">${(m.fphoto||(m.photos&&m.photos.length))?`<div class="ph">${m.fphoto?`<figure style="margin:0"><img src="${m.fphoto}" alt="工場名"><figcaption style="font-size:11px;color:#5f6b64">工場名</figcaption></figure>`:''}${(m.photos||[]).map(s=>`<img src="${s}" alt="${esc(m.name)}">`).join('')}</div>`:''}
+<table>${row('工場',(m.fac||'—')+(m.booth?'（ブース '+m.booth+'）':''))}${row('連絡先',m.contact)}${row('見積','$'+m.usd+'（即決 $'+m.go+'／上限 $'+m.max+'）')}${row('粗利率・利益',m.gm+'%・¥'+m.profit.toLocaleString()+'/個')}${row('売価・送料','¥'+m.price.toLocaleString()+'・¥'+m.ship.toLocaleString())}${row('梱包・CBM',m.box+'・'+m.cbm)}${row('MOQ',m.moq)}${row('FOB港',m.port)}${row('納期',m.lead)}${row('生産',m.country)}${row('メモ',m.note)}</table></div></article>`).join('\n');
+ const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>交易会 見積レポート ${stamp}</title>
+<style>body{margin:0;background:#f6f7f5;color:#1d2420;font:14px/1.5 -apple-system,"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;padding:16px}main{max-width:900px;margin:0 auto;display:grid;gap:12px}h1{font-size:20px;margin:0}.sum{color:#5f6b64;margin:2px 0 8px}article{background:#fff;border:1px solid #dde3df;border-radius:12px;padding:14px;break-inside:avoid}header{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}h2{font-size:16px;margin:0}header p{margin:0;color:#5f6b64;font-size:12px}.pill{color:#fff;font-weight:700;font-size:12px;padding:2px 10px;border-radius:999px;white-space:nowrap}.body{display:grid;gap:10px;margin-top:8px}.ph{display:flex;gap:6px;flex-wrap:wrap}.ph img{width:min(100%,260px);border-radius:8px;object-fit:contain;background:#f6f7f5}table{border-collapse:collapse;width:100%}th{text-align:left;color:#5f6b64;font-weight:500;width:8em;vertical-align:top;padding:3px 8px 3px 0}td{padding:3px 0;white-space:pre-wrap}@media print{body{background:#fff}article{border-color:#ccc}}</style></head>
+<body><main><h1>交易会 見積レポート</h1><p class="sum">${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} 作成・全${MEMOS.length}件（即決 ${cnt['即決']}・交渉 ${cnt['交渉']}・見送り ${cnt['見送り']}）。即決 → 交渉 → 見送りの順。</p>
+${cards}</main></body></html>`;
+ try{const how=await saveFile('fair_report_'+stamp+'.html',html,'text/html');$('m-out').textContent=how==='cancel'?'キャンセルしました':'写真つきレポートを保存しました'}catch(e){$('m-out').textContent='保存できませんでした'}
+});
+</script><script>
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(()=>{const st=document.getElementById('pwa-st');const ok=()=>{if(st)st.textContent='オフライン準備OK（ネットなしで開けます）'};if(navigator.serviceWorker.controller)ok();else navigator.serviceWorker.addEventListener('controllerchange',ok)}).catch(()=>{}))}
+</script></body></html>
